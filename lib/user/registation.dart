@@ -165,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ForgetPasswordPage(),
+                          builder: (context) => ForgotPasswordScreen(),
                         ),
                       );
                     },
