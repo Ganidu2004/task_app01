@@ -1,0 +1,9 @@
+# GitHub Linguist overrides
+# Treat native platform boilerplate/runner folders as vendored so GitHub recognizes Dart as the primary language
+
+android/** linguist-vendored
+ios/** linguist-vendored
+windows/** linguist-vendored
+linux/** linguist-vendored
+macos/** linguist-vendored
+web/** linguist-vendored
