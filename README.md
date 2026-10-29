@@ -56,13 +56,16 @@ Ensure you have the following installed on your machine:
 ### Installation & Setup
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/Ganidu2004/task_app01.git
    cd task_app01
    ```
-   *(or navigate to `task_app` folder)*
+
+   _(or navigate to `task_app` folder)_
 
 2. **Install dependencies:**
+
    ```bash
    flutter pub get
    ```
@@ -75,6 +78,7 @@ Ensure you have the following installed on your machine:
      ```
 
 4. **Run the Application:**
+
    ```bash
    flutter run
    ```
@@ -95,4 +99,3 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 ## 📄 License
 
 This project is open-source and available under the [MIT License](LICENSE).
-
