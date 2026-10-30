@@ -211,9 +211,22 @@ class _EventCreatePageState extends State<EventCreatePage> {
               // 1. Title Field
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Event Title',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
                   prefixIcon: Icon(Icons.title, color: Colors.lightBlue),
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
@@ -226,9 +239,22 @@ class _EventCreatePageState extends State<EventCreatePage> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Description',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
                   prefixIcon: Icon(Icons.description, color: Colors.lightBlue),
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
@@ -240,9 +266,22 @@ class _EventCreatePageState extends State<EventCreatePage> {
               // 3. Place Field
               TextFormField(
                 controller: _placeController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Place / Location',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
                   prefixIcon: Icon(Icons.location_on, color: Colors.lightBlue),
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
@@ -254,9 +293,22 @@ class _EventCreatePageState extends State<EventCreatePage> {
               // 4. Category Dropdown
               DropdownButtonFormField<String>(
                 initialValue: _selectedCategory,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Category',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
                   prefixIcon: Icon(Icons.category, color: Colors.lightBlue),
                 ),
                 items: _categories.map((category) {
@@ -321,9 +373,22 @@ class _EventCreatePageState extends State<EventCreatePage> {
               TextFormField(
                 controller: _maxAttendeesController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Max Attendees',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
                   prefixIcon: Icon(Icons.group, color: Colors.lightBlue),
                 ),
                 validator: (value) {
