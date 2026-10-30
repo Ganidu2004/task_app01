@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_app/user/forget_password.dart';
 import 'package:task_app/user/loging_page.dart';
 import 'package:task_app/widgets/bottom_nav_bar.dart';
@@ -34,6 +35,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
