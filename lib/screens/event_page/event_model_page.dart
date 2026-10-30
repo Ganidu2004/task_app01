@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EventModel {
-  final String id;           // Firestore document ID eka (optional, update/delete waladi godak watinawa)
+  final String id;          
   final String title;
   final String description;
   final String place;
   final String category;
-  final DateTime date;       // Event eka wena dawasa
-  final String time;         // Event eka start wena welawa (e.g., "10:30 AM")
-  final int maxAttendees;    // Samagama/events walata join wenna puluwan max limit eka
-  final String organizerId;  // Event eka create karapu userge UID eka (optional)
+  final DateTime date;       
+  final String time;         
+  final int maxAttendees;    
+  final String organizerId;  
 
   EventModel({
     required this.id,
