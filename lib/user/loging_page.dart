@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:task_app/home_page/home_page.dart';
 import 'package:task_app/user/forget_password.dart';
 import 'package:task_app/user/registation.dart';
+import 'package:task_app/widgets/bottom_nav_bar.dart';
 import 'auth_services.dart';
 
 class LoginPage extends StatefulWidget {
@@ -40,7 +40,7 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const BottomNavBar()),
         );
       }
     } on FirebaseAuthException catch (e) {
