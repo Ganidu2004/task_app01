@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_app/user/loging_page.dart';
 import 'package:task_app/user/user_model.dart';
 
@@ -29,8 +29,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   void logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('isLoggedIn'); 
-    
+    await prefs.remove('isLoggedIn');
+
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -58,6 +58,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           setState(() {
             _nameController.text = userModel.fullName;
             _emailController.text = userModel.email;
+            _phoneController.text = userModel.phoneNumber;
             _isLoading = false;
           });
         } else {
@@ -121,7 +122,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Profile'),
+        title: const Text(
+          'My Profile',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.lightBlue,
         foregroundColor: Colors.white,
@@ -197,9 +201,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   TextField(
                     controller: _nameController,
                     enabled: _isEditing,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Full Name',
-                      border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                      ),
                       prefixIcon: Icon(Icons.person, color: Colors.lightBlue),
                     ),
                   ),
@@ -207,9 +224,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   TextField(
                     controller: _emailController,
                     enabled: false,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Email Address',
-                      border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                      ),
                       prefixIcon: Icon(Icons.email, color: Colors.lightBlue),
                     ),
                   ),
@@ -217,9 +247,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   TextField(
                     controller: _phoneController,
                     enabled: _isEditing,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Phone Number',
-                      border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: Colors.blue, width: 2),
+                      ),
                       prefixIcon: Icon(Icons.phone, color: Colors.lightBlue),
                     ),
                   ),
@@ -278,7 +321,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                 onPressed: () async {
                                   Navigator.pop(context);
                                   await FirebaseAuth.instance.signOut();
-                                  logout(); 
+                                  logout();
                                 },
                                 child: const Text(
                                   'Sign Out',
