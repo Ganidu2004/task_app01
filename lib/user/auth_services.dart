@@ -11,6 +11,7 @@ class AuthService {
     required String email,
     required String password,
     required String phoneNumber,
+    String? profileImageUrl,
   }) async {
     UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
       email: email,
@@ -24,6 +25,7 @@ class AuthService {
 
       UserModel newUser = UserModel(
         uid: user.uid,
+        profileImageUrl: profileImageUrl,
         fullName: fullName,
         email: email,
         phoneNumber: phoneNumber,

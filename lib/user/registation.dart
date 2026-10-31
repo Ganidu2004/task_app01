@@ -1,6 +1,13 @@
+import 'dart:io';
+import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:task_app/constants.dart';
+import 'package:task_app/main.dart';
 import 'package:task_app/user/forget_password.dart';
 import 'package:task_app/user/loging_page.dart';
 import 'package:task_app/widgets/bottom_nav_bar.dart';
@@ -25,6 +32,72 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
+  // Image Picker variables
+  File? _imageFile;
+  Uint8List? _webImageBytes;
+  final ImagePicker _picker = ImagePicker();
+
+  // Function to pick image from gallery
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      if (kIsWeb) {
+        var bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _webImageBytes = bytes;
+        });
+      } else {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+        });
+      }
+    }
+  }
+
+  // Function to upload image to Cloudinary
+  Future<String?> _uploadToCloudinary() async {
+  try {
+    CloudinaryResponse? response;
+
+    if (kIsWeb || (_imageFile == null && _webImageBytes == null)) {
+      Uint8List imageBytes;
+      String identifierName;
+
+      if (_imageFile == null && _webImageBytes == null) {
+        final ByteData byteData = await rootBundle.load('assets/user.webp');
+        imageBytes = byteData.buffer.asUint8List();
+        identifierName = 'default_profile_${DateTime.now().millisecondsSinceEpoch}.png';
+      } else {
+        imageBytes = _webImageBytes!;
+        identifierName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      }
+
+      response = await cloudinary.uploadFile(
+        CloudinaryFile.fromBytesData(
+          imageBytes,
+          identifier: identifierName,
+          folder: 'profile_images',
+          resourceType: CloudinaryResourceType.Image,
+        ),
+      );
+    } else {
+      response = await cloudinary.uploadFile(
+        CloudinaryFile.fromFile(
+          _imageFile!.path,
+          identifier: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg', 
+          folder: 'profile_images',
+          resourceType: CloudinaryResourceType.Image,
+        ),
+      );
+    }
+
+    return response.secureUrl;
+  } catch (e) {
+    debugPrint('Cloudinary Error: $e');
+    rethrow;
+  }
+}
+
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -33,7 +106,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
+      // 1. Upload image to Cloudinary first (if selected)
+      String? imageUrl;
+        try {
+          imageUrl = await _uploadToCloudinary();
+        } catch (uploadError) {
+          debugPrint('Image upload error: $uploadError');
+          if (mounted) {
+            AppConstants.showCustomSnackBar(
+            context, 
+            'Failed to upload image: $uploadError', 
+            isError: true,
+          );
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
+      // 2. Register user and pass the profile image URL to auth service / Firestore
       await _authService.registerUser(
+        profileImageUrl: imageUrl,
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
@@ -44,9 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await prefs.setBool('isLoggedIn', true);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration Successful!')),
-        );
+        AppConstants.showCustomSnackBar(context, 'Registration Successful!');
         _nameController.clear();
         _emailController.clear();
         _phoneController.clear();
@@ -69,15 +161,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        AppConstants.showCustomSnackBar(context, message, isError: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        AppConstants.showCustomSnackBar(context, e.toString(), isError: true);
       }
     } finally {
       if (mounted) {
@@ -123,26 +211,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
+                //Profile Image Picker Widget
+                Center(
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey.shade200,
+                        backgroundImage: _imageFile != null
+                            ? FileImage(_imageFile!)
+                            : (_webImageBytes != null
+                                  ? MemoryImage(_webImageBytes!)
+                                        as ImageProvider
+                                  : null),
+                        child: (_imageFile == null && _webImageBytes == null)
+                            ? const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Colors.grey,
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: CircleAvatar(
+                          backgroundColor: Colors.lightBlue,
+                          radius: 18,
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.camera_alt,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            onPressed: _pickImage,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
                 // Full Name Field
                 TextFormField(
                   controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    prefixIcon: Icon(Icons.person, color: Colors.lightBlue),
+                  decoration: AppDecorations.authInputDecoration(
+                    labelText: 'Full Name', 
+                    prefixIcon: Icons.person
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -157,23 +272,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    prefixIcon: Icon(Icons.email, color: Colors.lightBlue),
+                  decoration: AppDecorations.authInputDecoration(
+                    labelText: 'Email Address', 
+                    prefixIcon: Icons.email
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -193,23 +294,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    prefixIcon: Icon(Icons.phone, color: Colors.lightBlue),
+                  decoration: AppDecorations.authInputDecoration(
+                    labelText: 'Phone Number', 
+                    prefixIcon: Icons.phone
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -227,23 +314,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    prefixIcon: Icon(Icons.lock, color: Colors.lightBlue),
+                  decoration: AppDecorations.authInputDecoration(
+                    labelText: 'Password', 
+                    prefixIcon: Icons.lock
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -261,26 +334,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    prefixIcon: Icon(
-                      Icons.lock_outline,
-                      color: Colors.lightBlue,
-                    ),
+                  decoration: AppDecorations.authInputDecoration(
+                    labelText: 'Confirm Password', 
+                    prefixIcon: Icons.lock_outline
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {

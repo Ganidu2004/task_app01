@@ -5,6 +5,7 @@ class UserModel {
   final String fullName;
   final String email;
   final String phoneNumber;
+  final String? profileImageUrl;
   final DateTime? createdAt;
 
   UserModel({
@@ -12,6 +13,7 @@ class UserModel {
     required this.fullName,
     required this.email,
     required this.phoneNumber,
+    this.profileImageUrl,
     this.createdAt,
   });
 
@@ -21,7 +23,10 @@ class UserModel {
       'fullName': fullName,
       'email': email,
       'phoneNumber': phoneNumber,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : Timestamp.now(),
+      'profileImageUrl': profileImageUrl,
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : Timestamp.now(),
     };
   }
 
@@ -31,7 +36,10 @@ class UserModel {
       fullName: map['fullName'] ?? '',
       email: map['email'] ?? '',
       phoneNumber: map['phoneNumber'] ?? '',
-      createdAt: map['createdAt'] != null ? (map['createdAt'] as Timestamp).toDate() : null,
+      profileImageUrl: map['profileImageUrl'],
+      createdAt: map['createdAt'] != null
+          ? (map['createdAt'] as Timestamp).toDate()
+          : null,
     );
   }
 }

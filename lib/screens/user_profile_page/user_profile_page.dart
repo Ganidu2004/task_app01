@@ -1,7 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:task_app/constants.dart';
+import 'package:task_app/main.dart';
 import 'package:task_app/user/loging_page.dart';
 import 'package:task_app/user/user_model.dart';
 
@@ -18,8 +23,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
+  String? _profileImageUrl;
   bool _isEditing = false;
   bool _isLoading = true;
+  bool _isUploadingImage = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -59,6 +67,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             _nameController.text = userModel.fullName;
             _emailController.text = userModel.email;
             _phoneController.text = userModel.phoneNumber;
+            _profileImageUrl = userModel.profileImageUrl;
             _isLoading = false;
           });
         } else {
@@ -71,12 +80,73 @@ class _UserProfilePageState extends State<UserProfilePage> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error fetching data: $e'),
-          backgroundColor: Colors.red,
-        ),
+      AppConstants.showCustomSnackBar(
+        context,
+        'Error fetching data: $e',
+        isError: true,
       );
+    }
+  }
+
+  // Update profile picture using Cloudinary
+  Future<void> _updateProfileImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+
+    setState(() => _isUploadingImage = true);
+
+    try {
+      CloudinaryResponse response;
+      if (kIsWeb) {
+        final bytes = await pickedFile.readAsBytes();
+        response = await cloudinary.uploadFile(
+          CloudinaryFile.fromBytesData(
+            bytes,
+            identifier: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            folder: 'profile_images',
+            resourceType: CloudinaryResourceType.Image,
+          ),
+        );
+      } else {
+        response = await cloudinary.uploadFile(
+          CloudinaryFile.fromFile(
+            pickedFile.path,
+            identifier: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            folder: 'profile_images',
+            resourceType: CloudinaryResourceType.Image,
+          ),
+        );
+      }
+
+      final uploadedUrl = response.secureUrl;
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .update({'profileImageUrl': uploadedUrl});
+
+        setState(() {
+          _profileImageUrl = uploadedUrl;
+          _isUploadingImage = false;
+        });
+
+        if (mounted) {
+          AppConstants.showCustomSnackBar(
+            context,
+            'Profile picture updated successfully!',
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isUploadingImage = false);
+      if (mounted) {
+        AppConstants.showCustomSnackBar(
+          context,
+          'Failed to upload image: $e',
+          isError: true,
+        );
+      }
     }
   }
 
@@ -99,21 +169,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
         });
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully!'),
-            backgroundColor: Colors.lightBlue,
-          ),
+        AppConstants.showCustomSnackBar(
+          context,
+          'Profile updated successfully!',
         );
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to update: $e'),
-          backgroundColor: Colors.red,
-        ),
+      AppConstants.showCustomSnackBar(
+        context,
+        'Failed to update: $e',
+        isError: true,
       );
     }
   }
@@ -150,14 +217,29 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   // Profile Avatar with Edit Icon badge
                   Stack(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 55,
                         backgroundColor: Colors.lightBlueAccent,
                         child: CircleAvatar(
                           radius: 52,
-                          backgroundImage: NetworkImage(
-                            'https://thumbs.dreamstime.com/b/simple-user-profile-icon-bright-blue-color-isolated-transparent-background-image-shows-basic-contact-rendered-406359700.jpg',
-                          ),
+                          backgroundColor: Colors.grey.shade200,
+                          backgroundImage:
+                              (_profileImageUrl != null &&
+                                  _profileImageUrl!.isNotEmpty)
+                              ? NetworkImage(_profileImageUrl!)
+                              : null,
+                          child: _isUploadingImage
+                              ? const CircularProgressIndicator(
+                                  color: Colors.lightBlue,
+                                )
+                              : ((_profileImageUrl == null ||
+                                        _profileImageUrl!.isEmpty)
+                                    ? const Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      )
+                                    : null),
                         ),
                       ),
                       Positioned(
@@ -174,9 +256,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
                               color: Colors.white,
                               size: 20,
                             ),
-                            onPressed: () {
-                              // Profile picture update logic (Firebase Storage)
-                            },
+                            onPressed: _isUploadingImage
+                                ? null
+                                : _updateProfileImage,
                           ),
                         ),
                       ),
@@ -201,69 +283,27 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   TextField(
                     controller: _nameController,
                     enabled: _isEditing,
-                    decoration: InputDecoration(
+                    decoration: AppDecorations.authInputDecoration(
                       labelText: 'Full Name',
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.blue, width: 2),
-                      ),
-                      prefixIcon: Icon(Icons.person, color: Colors.lightBlue),
+                      prefixIcon: Icons.person,
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _emailController,
                     enabled: false,
-                    decoration: InputDecoration(
+                    decoration: AppDecorations.authInputDecoration(
                       labelText: 'Email Address',
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.blue, width: 2),
-                      ),
-                      prefixIcon: Icon(Icons.email, color: Colors.lightBlue),
+                      prefixIcon: Icons.email,
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _phoneController,
                     enabled: _isEditing,
-                    decoration: InputDecoration(
+                    decoration: AppDecorations.authInputDecoration(
                       labelText: 'Phone Number',
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.blue, width: 2),
-                      ),
-                      prefixIcon: Icon(Icons.phone, color: Colors.lightBlue),
+                      prefixIcon: Icons.phone,
                     ),
                   ),
                   const SizedBox(height: 30),
