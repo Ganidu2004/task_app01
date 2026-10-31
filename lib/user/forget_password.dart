@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:task_app/constants.dart';
 import 'package:task_app/user/loging_page.dart';
 import 'auth_services.dart';
 
@@ -28,11 +29,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await _authService.sendPasswordResetEmail(_emailController.text.trim());
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset link sent! Check your email.'),
-            backgroundColor: Colors.green,
-          ),
+        AppConstants.showCustomSnackBar(
+          context,
+          'Password reset link sent! Check your email.',
         );
         Navigator.push(
           context,
@@ -48,15 +47,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
+        AppConstants.showCustomSnackBar(context, message, isError: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-        );
+        AppConstants.showCustomSnackBar(context, e.toString(), isError: true);
       }
     } finally {
       if (mounted) {
@@ -110,24 +105,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email Address',
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none,
+                decoration: 
+                AppDecorations.authInputDecoration(
+                    labelText: 'Email Address', 
+                    prefixIcon: Icons.email
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(color: Colors.blue, width: 2),
-                  ),
-                  prefixIcon: Icon(Icons.email, color: Colors.lightBlue),
-                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter your email';

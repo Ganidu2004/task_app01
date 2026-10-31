@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:task_app/constants.dart';
 import 'package:task_app/user/forget_password.dart';
 import 'package:task_app/user/registation.dart';
 import 'package:task_app/widgets/bottom_nav_bar.dart';
@@ -38,9 +39,7 @@ class _LoginPageState extends State<LoginPage> {
       await prefs.setBool('isLoggedIn', true);
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Login Successful!')));
+        AppConstants.showCustomSnackBar(context, 'Login Successful!');
 
         Navigator.pushReplacement(
           context,
@@ -60,15 +59,11 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        AppConstants.showCustomSnackBar(context, message, isError: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        AppConstants.showCustomSnackBar(context, e.toString(), isError: true);
       }
     } finally {
       if (mounted) {
@@ -116,23 +111,9 @@ class _LoginPageState extends State<LoginPage> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    prefixIcon: Icon(Icons.email, color: Colors.lightBlue),
+                  decoration: AppDecorations.authInputDecoration(
+                    labelText: 'Email Address', 
+                    prefixIcon: Icons.email
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -152,23 +133,9 @@ class _LoginPageState extends State<LoginPage> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    prefixIcon: Icon(Icons.lock, color: Colors.lightBlue),
+                  decoration: AppDecorations.authInputDecoration(
+                    labelText: 'Password', 
+                    prefixIcon: Icons.lock
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
