@@ -10,6 +10,7 @@ class EventModel {
   final String time;         
   final int maxAttendees;    
   final String organizerId;  
+  final String? imageUrl;
 
   EventModel({
     required this.id,
@@ -21,6 +22,7 @@ class EventModel {
     required this.time,
     required this.maxAttendees,
     required this.organizerId,
+    this.imageUrl,
   });
 
   // 1. Convert EventModel object into a Map 
@@ -35,6 +37,7 @@ class EventModel {
       'time': time,
       'maxAttendees': maxAttendees,
       'organizerId': organizerId,
+      'imageUrl': imageUrl,
     };
   }
 
@@ -50,6 +53,7 @@ class EventModel {
       time: map['time'] ?? '',
       maxAttendees: map['maxAttendees'] ?? 0,
       organizerId: map['organizerId'] ?? '',
+      imageUrl: map['imageUrl'],
     );
   }
 
@@ -64,6 +68,7 @@ class EventModel {
     String? time,
     int? maxAttendees,
     String? organizerId,
+    String? imageUrl,
   }) {
     return EventModel(
       id: id ?? this.id,
@@ -75,6 +80,7 @@ class EventModel {
       time: time ?? this.time,
       maxAttendees: maxAttendees ?? this.maxAttendees,
       organizerId: organizerId ?? this.organizerId,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 }
