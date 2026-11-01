@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_app/constants.dart';
+import 'package:task_app/database_services.dart';
 import 'package:task_app/main.dart';
 import 'package:task_app/user/loging_page.dart';
 import 'package:task_app/user/user_model.dart';
@@ -22,6 +25,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+
+  // Instantiate services
+  final DatabaseService _databaseService = DatabaseService();
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
   String? _profileImageUrl;
   bool _isEditing = false;
@@ -53,16 +60,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
       final User? currentUser = FirebaseAuth.instance.currentUser;
 
       if (currentUser != null) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
+        UserModel? userModel = await _databaseService.getUserData(currentUser.uid);
 
-        if (userDoc.exists) {
-          UserModel userModel = UserModel.fromMap(
-            userDoc.data() as Map<String, dynamic>,
-          );
-
+        if (userModel != null) {
           setState(() {
             _nameController.text = userModel.fullName;
             _emailController.text = userModel.email;
@@ -96,35 +96,30 @@ class _UserProfilePageState extends State<UserProfilePage> {
     setState(() => _isUploadingImage = true);
 
     try {
-      CloudinaryResponse response;
+      Uint8List? webBytes;
+      File? imageFile;
+
       if (kIsWeb) {
-        final bytes = await pickedFile.readAsBytes();
-        response = await cloudinary.uploadFile(
-          CloudinaryFile.fromBytesData(
-            bytes,
-            identifier: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
-            folder: 'profile_images',
-            resourceType: CloudinaryResourceType.Image,
-          ),
-        );
+        webBytes = await pickedFile.readAsBytes();
       } else {
-        response = await cloudinary.uploadFile(
-          CloudinaryFile.fromFile(
-            pickedFile.path,
-            identifier: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
-            folder: 'profile_images',
-            resourceType: CloudinaryResourceType.Image,
-          ),
-        );
+        imageFile = File(pickedFile.path);
       }
 
-      final uploadedUrl = response.secureUrl;
+      // 1. Upload to Cloudinary
+      final uploadedUrl = await _cloudinaryService.uploadImage(
+        imageFile: imageFile,
+        webImageBytes: webBytes,
+        folderName: 'profile_images',
+        prefixName: 'profile',
+      );
+
       final User? currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .update({'profileImageUrl': uploadedUrl});
+      if (currentUser != null && uploadedUrl != null) {
+        // 2. Update in Firestore
+        await _databaseService.updateUserData(
+          currentUser.uid,
+          {'profileImageUrl': uploadedUrl},
+        );
 
         setState(() {
           _profileImageUrl = uploadedUrl;

@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:task_app/database_services.dart';
 import 'user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final DatabaseService _databaseService = DatabaseService();
 
   Future<UserCredential> registerUser({
     required String fullName,
@@ -32,10 +32,7 @@ class AuthService {
         createdAt: DateTime.now(),
       );
 
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .set(newUser.toMap());
+      await _databaseService.saveUserData(newUser);
     }
 
     return userCredential;

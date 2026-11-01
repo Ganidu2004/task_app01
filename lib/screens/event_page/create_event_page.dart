@@ -1,13 +1,12 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:task_app/constants.dart';
-import 'package:task_app/main.dart';
+import 'package:task_app/database_services.dart';
 import 'package:task_app/screens/event_page/event_model_page.dart';
 import 'package:task_app/widgets/bottom_nav_bar.dart';
 
@@ -26,6 +25,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _placeController = TextEditingController();
   final TextEditingController _maxAttendeesController = TextEditingController();
+
+  // Instantiate the event service
+  final DatabaseService _eventService = DatabaseService();
+  final CloudinaryService _cloudinaryService = CloudinaryService();
 
   // Selected values for category, date, and time
   String _selectedCategory = 'Entertainment';
@@ -112,48 +115,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
     }
   }
 
- // Function to upload image to Cloudinary
-  Future<String?> _uploadToCloudinary() async {
-    try {
-      CloudinaryResponse? response;
-
-      if (kIsWeb || (_imageFile == null && _webImageBytes == null)) {
-        Uint8List imageBytes;
-        String identifierName;
-
-        if (_imageFile == null && _webImageBytes == null) {
-          final ByteData byteData = await rootBundle.load('assets/user.webp');
-          imageBytes = byteData.buffer.asUint8List();
-          identifierName = 'default_event_${DateTime.now().millisecondsSinceEpoch}.png';
-        } else {
-          imageBytes = _webImageBytes!;
-          identifierName = 'event_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        }
-
-        response = await cloudinary.uploadFile(
-          CloudinaryFile.fromBytesData(
-            imageBytes,
-            identifier: identifierName,
-            folder: 'event_images',
-            resourceType: CloudinaryResourceType.Image,
-          ),
-        );
-      } else {
-        response = await cloudinary.uploadFile(
-          CloudinaryFile.fromFile(
-            _imageFile!.path,
-            identifier: 'event_${DateTime.now().millisecondsSinceEpoch}.jpg', 
-            folder: 'event_images',
-            resourceType: CloudinaryResourceType.Image,
-          ),
-        );
-      }
-
-      return response.secureUrl; 
-    } catch (e) {
-      throw Exception('Cloudinary upload error: $e');
-    }
-  }
+ 
 
   // Submit and save event to Firestore
   Future<void> _submitEvent() async {
@@ -173,15 +135,20 @@ class _EventCreatePageState extends State<EventCreatePage> {
       // Format time string (e.g., "10:30 AM")
       final String formattedTime = _selectedTime.format(context);
 
-      DocumentReference docRef = FirebaseFirestore.instance
-          .collection('events')
-          .doc();
+      // Generate a document reference ID for the event
+      final String docId = FirebaseFirestore.instance.collection('events').doc().id;
 
-      String? imageUrl = await _uploadToCloudinary();
+      // 1. Upload image using CloudinaryService
+      String? imageUrl = await _cloudinaryService.uploadImage(
+        imageFile: _imageFile,
+        webImageBytes: _webImageBytes,
+        folderName: 'event_images',
+        prefixName: 'event',
+);
 
       // Create EventModel instance with auto-saved current user UID
       EventModel newEvent = EventModel(
-        id: docRef.id,
+        id: docId,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         place: _placeController.text.trim(),
@@ -193,8 +160,8 @@ class _EventCreatePageState extends State<EventCreatePage> {
         imageUrl: imageUrl,
       );
 
-      // Save to Firestore 'events' collection
-      await docRef.set(newEvent.toMap());
+      // 3. Save to Firestore using EventService
+      await _eventService.createEvent(newEvent);
 
       setState(() => _isLoading = false);
 

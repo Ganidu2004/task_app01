@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:task_app/database_services.dart';
 import 'package:task_app/screens/event_page/create_event_page.dart';
 import 'package:task_app/screens/explore_page/explore_page.dart';
 import 'package:task_app/screens/home_page/home_page.dart';
@@ -20,7 +20,8 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> {
   int _currentIndex = 0;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Instantiate DatabaseService
+  final DatabaseService _databaseService = DatabaseService();
 
   final List<Widget> _pages = [
     const HomePage(),
@@ -30,21 +31,17 @@ class _BottomNavBarState extends State<BottomNavBar> {
     const UserProfilePage(),
   ];
 
-  Stream<UserModel?> getUserData() {
+ // Helper method to get the user stream
+  Stream<UserModel?> _getUserStream() {
     String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     if (uid.isEmpty) return Stream.value(null);
-
-    return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
-      if (snapshot.exists && snapshot.data() != null) {
-        return UserModel.fromMap(snapshot.data()!);
-      }
-      return null;
-    });
+    return _databaseService.streamUserData(uid);
   }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<UserModel?>(
-      stream: getUserData(),
+      stream: _getUserStream(),
       builder: (context, snapshot) {
         String? profileImageUrl;
         if (snapshot.hasData && snapshot.data != null) {

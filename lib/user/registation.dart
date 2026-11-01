@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_app/constants.dart';
-import 'package:task_app/main.dart';
+import 'package:task_app/database_services.dart';
 import 'package:task_app/user/forget_password.dart';
 import 'package:task_app/user/loging_page.dart';
 import 'package:task_app/widgets/bottom_nav_bar.dart';
@@ -30,7 +29,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       TextEditingController(); // Added Confirm Password Controller
 
   final AuthService _authService = AuthService();
+
+  // Instantiate CloudinaryService here
+  final CloudinaryService _cloudinaryService = CloudinaryService();
+
   bool _isLoading = false;
+  
+  bool _isPasswordObscured = true;
+  bool _isConfirmPasswordObscured = true;
 
   // Image Picker variables
   File? _imageFile;
@@ -54,50 +60,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  // Function to upload image to Cloudinary
-  Future<String?> _uploadToCloudinary() async {
-  try {
-    CloudinaryResponse? response;
-
-    if (kIsWeb || (_imageFile == null && _webImageBytes == null)) {
-      Uint8List imageBytes;
-      String identifierName;
-
-      if (_imageFile == null && _webImageBytes == null) {
-        final ByteData byteData = await rootBundle.load('assets/user.webp');
-        imageBytes = byteData.buffer.asUint8List();
-        identifierName = 'default_profile_${DateTime.now().millisecondsSinceEpoch}.png';
-      } else {
-        imageBytes = _webImageBytes!;
-        identifierName = 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      }
-
-      response = await cloudinary.uploadFile(
-        CloudinaryFile.fromBytesData(
-          imageBytes,
-          identifier: identifierName,
-          folder: 'profile_images',
-          resourceType: CloudinaryResourceType.Image,
-        ),
-      );
-    } else {
-      response = await cloudinary.uploadFile(
-        CloudinaryFile.fromFile(
-          _imageFile!.path,
-          identifier: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg', 
-          folder: 'profile_images',
-          resourceType: CloudinaryResourceType.Image,
-        ),
-      );
-    }
-
-    return response.secureUrl;
-  } catch (e) {
-    debugPrint('Cloudinary Error: $e');
-    rethrow;
-  }
-}
-
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -109,7 +71,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // 1. Upload image to Cloudinary first (if selected)
       String? imageUrl;
         try {
-          imageUrl = await _uploadToCloudinary();
+          imageUrl = await _cloudinaryService.uploadImage(
+            imageFile: _imageFile,
+            webImageBytes: _webImageBytes,
+            folderName: 'profile_images',
+            prefixName: 'profile',
+          );
         } catch (uploadError) {
           debugPrint('Image upload error: $uploadError');
           if (mounted) {
@@ -313,10 +280,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Password Field
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _isPasswordObscured,
                   decoration: AppDecorations.authInputDecoration(
                     labelText: 'Password', 
                     prefixIcon: Icons.lock
+                  ).copyWith(
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                        _isPasswordObscured = !_isPasswordObscured;
+                        });
+                      },
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -333,10 +311,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Confirm Password Field (NEW)
                 TextFormField(
                   controller: _confirmPasswordController,
-                  obscureText: true,
+                  obscureText: _isConfirmPasswordObscured,
                   decoration: AppDecorations.authInputDecoration(
                     labelText: 'Confirm Password', 
                     prefixIcon: Icons.lock_outline
+                  ).copyWith(
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isConfirmPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isConfirmPasswordObscured = !_isConfirmPasswordObscured;
+                        });
+                      },
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
