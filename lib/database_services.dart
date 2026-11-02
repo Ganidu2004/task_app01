@@ -32,7 +32,10 @@ class DatabaseService {
   // Fetch user details from Firestore by UID
   Future<UserModel?> getUserData(String uid) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      DocumentSnapshot doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get();
       if (doc.exists && doc.data() != null) {
         return UserModel.fromMap(doc.data() as Map<String, dynamic>);
       }
@@ -76,10 +79,10 @@ class DatabaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return EventModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return EventModel.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   // Stream joined participants count for a specific event in real-time
@@ -93,15 +96,15 @@ class DatabaseService {
 
   // Edite Event Function
   Future<void> updateEvent(EventModel eventModel) async {
-  try {
-    await _firestore
-        .collection('events')
-        .doc(eventModel.id)
-        .update(eventModel.toMap());
-  } catch (e) {
-    throw Exception('Failed to update event: $e');
+    try {
+      await _firestore
+          .collection('events')
+          .doc(eventModel.id)
+          .update(eventModel.toMap());
+    } catch (e) {
+      throw Exception('Failed to update event: $e');
+    }
   }
-}
 
   // Delete Event Function
   Future<void> deleteEvent(String eventId) async {
@@ -118,41 +121,52 @@ class DatabaseService {
     required String userId,
   }) async {
     try {
-      DocumentSnapshot eventDoc = await _firestore.collection('events').doc(eventId).get();
-      if (!eventDoc.exists) {
-        return 'Event not found';
-      }
-      
-      Map<String, dynamic> eventData = eventDoc.data() as Map<String, dynamic>;
-      int maxAttendees = eventData['maxAttendees'] ?? 0;
+      return await _firestore.runTransaction((transaction) async {
+        DocumentReference eventRef = _firestore
+            .collection('events')
+            .doc(eventId);
+        DocumentSnapshot eventDoc = await transaction.get(eventRef);
 
-      QuerySnapshot participantsSnapshot = await _firestore
-          .collection('event_participants')
-          .where('eventId', isEqualTo: eventId)
-          .get();
+        if (!eventDoc.exists) {
+          return 'Event not found';
+        }
 
-      int currentAttendeesCount = participantsSnapshot.docs.length;
+        Map<String, dynamic> eventData =
+            eventDoc.data() as Map<String, dynamic>;
+        int maxAttendees = eventData['maxAttendees'] ?? 0;
 
-      bool alreadyJoined = participantsSnapshot.docs.any((doc) => doc['userId'] == userId);
-      if (alreadyJoined) {
-        return 'You have already joined this event!';
-      }
+        QuerySnapshot participantsSnapshot = await _firestore
+            .collection('event_participants')
+            .where('eventId', isEqualTo: eventId)
+            .get();
 
-      if (currentAttendeesCount >= maxAttendees) {
-        return 'Sorry, this event is full! No more slots available.';
-      }
+        int currentAttendeesCount = participantsSnapshot.docs.length;
 
-      String joinId = _firestore.collection('event_participants').doc().id;
-      EventJoinModel joinModel = EventJoinModel(
-        id: joinId,
-        eventId: eventId,
-        userId: userId,
-        joinedAt: DateTime.now(),
-      );
+        bool alreadyJoined = participantsSnapshot.docs.any(
+          (doc) => doc['userId'] == userId,
+        );
+        if (alreadyJoined) {
+          return 'You have already joined this event!';
+        }
 
-      await _firestore.collection('event_participants').doc(joinId).set(joinModel.toMap());
+        if (currentAttendeesCount >= maxAttendees) {
+          return 'Sorry, this event is full! No more slots available.';
+        }
 
-      return 'Successfully joined the event!';
+        DocumentReference joinRef = _firestore
+            .collection('event_participants')
+            .doc();
+        EventJoinModel joinModel = EventJoinModel(
+          id: joinRef.id,
+          eventId: eventId,
+          userId: userId,
+          joinedAt: DateTime.now(),
+        );
+
+        transaction.set(joinRef, joinModel.toMap());
+
+        return 'Successfully joined the event!';
+      });
     } catch (e) {
       throw Exception('Failed to join event: $e');
     }
@@ -165,10 +179,10 @@ class DatabaseService {
         .where('userId', isEqualTo: userId)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => doc.data()['eventId'].toString())
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => doc.data()['eventId'].toString())
+              .toList();
+        });
   }
 
   Future<int> getRemainingSlots(String eventId, int maxAttendees) async {
@@ -181,15 +195,11 @@ class DatabaseService {
     int remaining = maxAttendees - currentCount;
     return remaining > 0 ? remaining : 0;
   }
-  
 }
-
-
 
 // Ensure this points to your cloudinary instance/constants
 
 class CloudinaryService {
-
   // Generic image upload method for both Profile and Event images
   Future<String?> uploadImage({
     File? imageFile,
@@ -207,10 +217,12 @@ class CloudinaryService {
         if (imageFile == null && webImageBytes == null) {
           final ByteData byteData = await rootBundle.load('assets/user.webp');
           imageBytes = byteData.buffer.asUint8List();
-          identifierName = 'default_${prefixName}_${DateTime.now().millisecondsSinceEpoch}.png';
+          identifierName =
+              'default_${prefixName}_${DateTime.now().millisecondsSinceEpoch}.png';
         } else {
           imageBytes = webImageBytes!;
-          identifierName = '${prefixName}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          identifierName =
+              '${prefixName}_${DateTime.now().millisecondsSinceEpoch}.jpg';
         }
 
         response = await cloudinary.uploadFile(
@@ -225,7 +237,8 @@ class CloudinaryService {
         response = await cloudinary.uploadFile(
           CloudinaryFile.fromFile(
             imageFile!.path,
-            identifier: '${prefixName}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            identifier:
+                '${prefixName}_${DateTime.now().millisecondsSinceEpoch}.jpg',
             folder: folderName,
             resourceType: CloudinaryResourceType.Image,
           ),

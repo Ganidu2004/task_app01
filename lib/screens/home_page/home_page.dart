@@ -67,11 +67,14 @@ class HomePage extends StatelessWidget {
                 return StreamBuilder<List<EventModel>>(
                   stream: _databaseService.streamEvents(),
                   builder: (context, eventSnapshot) {
-                    if (eventSnapshot.connectionState == ConnectionState.waiting) {
+                    if (eventSnapshot.connectionState ==
+                        ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
                     if (eventSnapshot.hasError) {
-                      return Center(child: Text('Error: ${eventSnapshot.error}'));
+                      return Center(
+                        child: Text('Error: ${eventSnapshot.error}'),
+                      );
                     }
                     if (!eventSnapshot.hasData || eventSnapshot.data!.isEmpty) {
                       return const Center(child: Text('No events found.'));
@@ -95,34 +98,58 @@ class HomePage extends StatelessWidget {
                       itemCount: otherEvents.length,
                       itemBuilder: (context, index) {
                         final event = otherEvents[index];
-                        return EventCard(
-                          event: event,
-                          databaseService: _databaseService,
-                          actionButton: ElevatedButton.icon(
-                            onPressed: () async {
-                              String message = await _databaseService
-                                  .joinEventWithModel(
-                                eventId: event.id,
-                                userId: currentUserId,
-                              );
 
-                              if (!context.mounted) return; 
-                              
-                              bool isSuccess = message.contains('Successfully');
-
-                              AppConstants.showCustomSnackBar(
-                                context,
-                                message,
-                                isError: !isSuccess, 
-                              );
-                            },
-                            icon: const Icon(Icons.person_add, size: 16),
-                            label: const Text('Join Event'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.lightBlue,
-                              foregroundColor: Colors.white,
-                            ),
+                        // **මෙතැනදී එක් එක් event එකේ real-time count එක බලලා button එක manage කරනු ලැබේ**
+                        return StreamBuilder<int>(
+                          stream: _databaseService.streamEventParticipantsCount(
+                            event.id,
                           ),
+                          builder: (context, countSnapshot) {
+                            int joinedCount = countSnapshot.data ?? 0;
+                            bool isEventFull =
+                                joinedCount >= event.maxAttendees;
+
+                            return EventCard(
+                              event: event,
+                              databaseService: _databaseService,
+                              actionButton: ElevatedButton.icon(
+                                onPressed: isEventFull
+                                    ? null // Event එක Full නම් button එක disable වේ
+                                    : () async {
+                                        String message = await _databaseService
+                                            .joinEventWithModel(
+                                              eventId: event.id,
+                                              userId: currentUserId,
+                                            );
+
+                                        if (!context.mounted) return;
+
+                                        bool isSuccess = message.contains(
+                                          'Successfully',
+                                        );
+
+                                        AppConstants.showCustomSnackBar(
+                                          context,
+                                          message,
+                                          isError: !isSuccess,
+                                        );
+                                      },
+                                icon: Icon(
+                                  isEventFull ? Icons.block : Icons.person_add,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  isEventFull ? 'Event Full' : 'Join Event',
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isEventFull
+                                      ? Colors.grey.shade400
+                                      : Colors.lightBlue,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            );
+                          },
                         );
                       },
                     );
