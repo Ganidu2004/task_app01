@@ -80,6 +80,18 @@ class DatabaseService {
     });
   }
 
+  // Edite Event Function
+  Future<void> updateEvent(EventModel eventModel) async {
+  try {
+    await _firestore
+        .collection('events')
+        .doc(eventModel.id)
+        .update(eventModel.toMap());
+  } catch (e) {
+    throw Exception('Failed to update event: $e');
+  }
+}
+
   // Delete Event Function
   Future<void> deleteEvent(String eventId) async {
     try {

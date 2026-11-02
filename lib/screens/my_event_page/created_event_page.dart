@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:task_app/database_services.dart';
+import 'package:task_app/screens/event_page/edite_event_page.dart';
 import 'package:task_app/screens/event_page/event_model_page.dart';
 import 'package:task_app/widgets/event_card.dart'; 
 
@@ -47,7 +48,12 @@ class MyCreatedEventsScreen extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
-                       
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                          builder: (context) => EventEditPage(event: event),
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.edit, size: 16, color: Colors.blue),
                       label: const Text('Edit', style: TextStyle(color: Colors.blue)),
