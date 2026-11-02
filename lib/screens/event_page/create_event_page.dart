@@ -158,6 +158,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         maxAttendees: int.parse(_maxAttendeesController.text.trim()),
         organizerId: currentUser.uid, 
         imageUrl: imageUrl,
+        createdAt: DateTime.now(),
       );
 
       // 3. Save to Firestore using EventService

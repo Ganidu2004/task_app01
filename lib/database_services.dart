@@ -72,6 +72,7 @@ class DatabaseService {
     return _firestore
         .collection('events')
         .where('organizerId', isEqualTo: currentUserId)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {

@@ -11,6 +11,7 @@ class EventModel {
   final int maxAttendees;    
   final String organizerId;  
   final String? imageUrl;
+  final DateTime createdAt;
 
   EventModel({
     required this.id,
@@ -23,6 +24,7 @@ class EventModel {
     required this.maxAttendees,
     required this.organizerId,
     this.imageUrl,
+    required this.createdAt,
   });
 
   // 1. Convert EventModel object into a Map 
@@ -38,6 +40,7 @@ class EventModel {
       'maxAttendees': maxAttendees,
       'organizerId': organizerId,
       'imageUrl': imageUrl,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 
@@ -54,6 +57,7 @@ class EventModel {
       maxAttendees: map['maxAttendees'] ?? 0,
       organizerId: map['organizerId'] ?? '',
       imageUrl: map['imageUrl'],
+      createdAt: map['createdAt'] != null ? (map['createdAt'] as Timestamp).toDate() : DateTime.now(),
     );
   }
 
@@ -69,6 +73,7 @@ class EventModel {
     int? maxAttendees,
     String? organizerId,
     String? imageUrl,
+    DateTime? createdAt,
   }) {
     return EventModel(
       id: id ?? this.id,
@@ -81,6 +86,7 @@ class EventModel {
       maxAttendees: maxAttendees ?? this.maxAttendees,
       organizerId: organizerId ?? this.organizerId,
       imageUrl: imageUrl ?? this.imageUrl,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
