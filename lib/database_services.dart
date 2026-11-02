@@ -82,6 +82,15 @@ class DatabaseService {
     });
   }
 
+  // Stream joined participants count for a specific event in real-time
+  Stream<int> streamEventParticipantsCount(String eventId) {
+    return _firestore
+        .collection('event_participants')
+        .where('eventId', isEqualTo: eventId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
   // Edite Event Function
   Future<void> updateEvent(EventModel eventModel) async {
   try {
