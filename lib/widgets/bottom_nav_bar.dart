@@ -68,7 +68,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
             index: _currentIndex,
             items: <Widget>[
               const Icon(Icons.home, size: 28, color: Colors.white),
-              const Icon(Icons.explore, size: 28, color: Colors.white),
+              const Icon(Icons.search, size: 28, color: Colors.white),
               const Icon(Icons.add_circle, size: 32, color: Colors.white),
               const Icon(Icons.event, size: 28, color: Colors.white),
               
