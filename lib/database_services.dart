@@ -57,6 +57,38 @@ class DatabaseService {
         .doc(eventModel.id)
         .set(eventModel.toMap());
   }
+
+  // Stream all events from Firestore in real-time
+  Stream<List<EventModel>> streamEvents() {
+    return _firestore.collection('events').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return EventModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
+  }
+
+  // Stream events created by a specific user (Current User)
+  Stream<List<EventModel>> streamUserEvents(String currentUserId) {
+    return _firestore
+        .collection('events')
+        .where('organizerId', isEqualTo: currentUserId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return EventModel.fromMap(doc.data(), doc.id);
+      }).toList();
+    });
+  }
+
+  // Delete Event Function
+  Future<void> deleteEvent(String eventId) async {
+    try {
+      await _firestore.collection('events').doc(eventId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete event: $e');
+    }
+  }
+  
 }
 
 
