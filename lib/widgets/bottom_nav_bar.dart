@@ -24,7 +24,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   final DatabaseService _databaseService = DatabaseService();
 
   final List<Widget> _pages = [
-    const HomePage(),
+    HomePage(),
     const SearchPage(),
     const EventCreatePage(),
     const MyEventPage(),
