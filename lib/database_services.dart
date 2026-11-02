@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:task_app/main.dart';
 import 'package:task_app/screens/event_page/event_model_page.dart';
+import 'package:task_app/screens/home_page/join_event_modele.dart';
 import 'package:task_app/user/user_model.dart';
 
 class DatabaseService {
@@ -100,6 +101,76 @@ class DatabaseService {
     } catch (e) {
       throw Exception('Failed to delete event: $e');
     }
+  }
+
+  //Event Join Function
+  Future<String> joinEventWithModel({
+    required String eventId,
+    required String userId,
+  }) async {
+    try {
+      DocumentSnapshot eventDoc = await _firestore.collection('events').doc(eventId).get();
+      if (!eventDoc.exists) {
+        return 'Event not found';
+      }
+      
+      Map<String, dynamic> eventData = eventDoc.data() as Map<String, dynamic>;
+      int maxAttendees = eventData['maxAttendees'] ?? 0;
+
+      QuerySnapshot participantsSnapshot = await _firestore
+          .collection('event_participants')
+          .where('eventId', isEqualTo: eventId)
+          .get();
+
+      int currentAttendeesCount = participantsSnapshot.docs.length;
+
+      bool alreadyJoined = participantsSnapshot.docs.any((doc) => doc['userId'] == userId);
+      if (alreadyJoined) {
+        return 'You have already joined this event!';
+      }
+
+      if (currentAttendeesCount >= maxAttendees) {
+        return 'Sorry, this event is full! No more slots available.';
+      }
+
+      String joinId = _firestore.collection('event_participants').doc().id;
+      EventJoinModel joinModel = EventJoinModel(
+        id: joinId,
+        eventId: eventId,
+        userId: userId,
+        joinedAt: DateTime.now(),
+      );
+
+      await _firestore.collection('event_participants').doc(joinId).set(joinModel.toMap());
+
+      return 'Successfully joined the event!';
+    } catch (e) {
+      throw Exception('Failed to join event: $e');
+    }
+  }
+
+  //Get The Join Event Id
+  Stream<List<String>> streamJoinedEventIds(String userId) {
+    return _firestore
+        .collection('event_participants')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) => doc.data()['eventId'].toString())
+          .toList();
+    });
+  }
+
+  Future<int> getRemainingSlots(String eventId, int maxAttendees) async {
+    QuerySnapshot participantsSnapshot = await _firestore
+        .collection('event_participants')
+        .where('eventId', isEqualTo: eventId)
+        .get();
+
+    int currentCount = participantsSnapshot.docs.length;
+    int remaining = maxAttendees - currentCount;
+    return remaining > 0 ? remaining : 0;
   }
   
 }
