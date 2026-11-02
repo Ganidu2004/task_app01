@@ -10,7 +10,7 @@ import 'package:task_app/screens/event_page/event_model_page.dart';
 import 'package:task_app/widgets/bottom_nav_bar.dart';
 
 class EventEditPage extends StatefulWidget {
-  final EventModel event; 
+  final EventModel event;
 
   const EventEditPage({super.key, required this.event});
 
@@ -35,11 +35,11 @@ class _EventEditPageState extends State<EventEditPage> {
   late String _selectedCategory;
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
-  
+
   bool _isLoading = false;
   File? _imageFile;
   Uint8List? _webImageBytes;
-  late String? _existingImageUrl; 
+  late String? _existingImageUrl;
 
   final List<String> _categories = [
     'Entertainment',
@@ -54,9 +54,13 @@ class _EventEditPageState extends State<EventEditPage> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.event.title);
-    _descriptionController = TextEditingController(text: widget.event.description);
+    _descriptionController = TextEditingController(
+      text: widget.event.description,
+    );
     _placeController = TextEditingController(text: widget.event.place);
-    _maxAttendeesController = TextEditingController(text: widget.event.maxAttendees.toString());
+    _maxAttendeesController = TextEditingController(
+      text: widget.event.maxAttendees.toString(),
+    );
     _selectedCategory = widget.event.category;
     _selectedDate = widget.event.date;
     _existingImageUrl = widget.event.imageUrl;
@@ -65,7 +69,7 @@ class _EventEditPageState extends State<EventEditPage> {
 
   TimeOfDay _parseTimeOfDay(String timeString) {
     try {
-      final format = DateFormat.jm(); 
+      final format = DateFormat.jm();
       final parsedDate = format.parse(timeString);
       return TimeOfDay.fromDateTime(parsedDate);
     } catch (e) {
@@ -184,7 +188,11 @@ class _EventEditPageState extends State<EventEditPage> {
       setState(() => _isLoading = false);
 
       if (!mounted) return;
-      AppConstants.showCustomSnackBar(context, 'Event updated successfully!', isError: false);
+      AppConstants.showCustomSnackBar(
+        context,
+        'Event updated successfully!',
+        isError: false,
+      );
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -194,7 +202,11 @@ class _EventEditPageState extends State<EventEditPage> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (!mounted) return;
-      AppConstants.showCustomSnackBar(context, 'Failed to update event: $e', isError: true);
+      AppConstants.showCustomSnackBar(
+        context,
+        'Failed to update event: $e',
+        isError: true,
+      );
     }
   }
 
@@ -202,7 +214,10 @@ class _EventEditPageState extends State<EventEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Event', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Edit Event',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         backgroundColor: Colors.lightBlue,
         foregroundColor: Colors.white,
@@ -232,26 +247,40 @@ class _EventEditPageState extends State<EventEditPage> {
                             child: Image.file(_imageFile!, fit: BoxFit.cover),
                           )
                         : _webImageBytes != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.memory(_webImageBytes!, fit: BoxFit.cover),
-                              )
-                            : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(_existingImageUrl!, fit: BoxFit.cover),
-                                  )
-                                : Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(Icons.add_a_photo, size: 40, color: Colors.lightBlue),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        'Tap to change event banner image',
-                                        style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500),
-                                      ),
-                                    ],
-                                  ),
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              _webImageBytes!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : (_existingImageUrl != null &&
+                              _existingImageUrl!.isNotEmpty)
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              _existingImageUrl!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.add_a_photo,
+                                size: 40,
+                                color: Colors.lightBlue,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Tap to change event banner image',
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ),
@@ -261,7 +290,7 @@ class _EventEditPageState extends State<EventEditPage> {
               TextFormField(
                 controller: _titleController,
                 decoration: AppDecorations.authInputDecoration(
-                  labelText: 'Event Title', 
+                  labelText: 'Event Title',
                   prefixIcon: Icons.title,
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
@@ -275,7 +304,7 @@ class _EventEditPageState extends State<EventEditPage> {
                 controller: _descriptionController,
                 maxLines: 3,
                 decoration: AppDecorations.authInputDecoration(
-                  labelText: 'Description', 
+                  labelText: 'Description',
                   prefixIcon: Icons.description,
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
@@ -288,7 +317,7 @@ class _EventEditPageState extends State<EventEditPage> {
               TextFormField(
                 controller: _placeController,
                 decoration: AppDecorations.authInputDecoration(
-                  labelText: 'Place / Location', 
+                  labelText: 'Place / Location',
                   prefixIcon: Icons.location_on,
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
@@ -301,7 +330,7 @@ class _EventEditPageState extends State<EventEditPage> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedCategory,
                 decoration: AppDecorations.authInputDecoration(
-                  labelText: 'Category', 
+                  labelText: 'Category',
                   prefixIcon: Icons.category,
                 ),
                 items: _categories.map((category) {
@@ -328,7 +357,10 @@ class _EventEditPageState extends State<EventEditPage> {
                         side: const BorderSide(color: Colors.grey),
                       ),
                       onPressed: _pickDate,
-                      icon: const Icon(Icons.calendar_today, color: Colors.lightBlue),
+                      icon: const Icon(
+                        Icons.calendar_today,
+                        color: Colors.lightBlue,
+                      ),
                       label: Text(
                         "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}",
                         style: const TextStyle(color: Colors.black87),
@@ -343,7 +375,10 @@ class _EventEditPageState extends State<EventEditPage> {
                         side: const BorderSide(color: Colors.grey),
                       ),
                       onPressed: _pickTime,
-                      icon: const Icon(Icons.access_time, color: Colors.lightBlue),
+                      icon: const Icon(
+                        Icons.access_time,
+                        color: Colors.lightBlue,
+                      ),
                       label: Text(
                         _selectedTime.format(context),
                         style: const TextStyle(color: Colors.black87),
@@ -359,7 +394,7 @@ class _EventEditPageState extends State<EventEditPage> {
                 controller: _maxAttendeesController,
                 keyboardType: TextInputType.number,
                 decoration: AppDecorations.authInputDecoration(
-                  labelText: 'Max Attendees', 
+                  labelText: 'Max Attendees',
                   prefixIcon: Icons.group,
                 ),
                 validator: (value) {
@@ -388,7 +423,10 @@ class _EventEditPageState extends State<EventEditPage> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           'Update Event',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
