@@ -31,7 +31,10 @@ class DatabaseService {
 
   Future<UserModel?> getUserData(String uid) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      DocumentSnapshot doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get();
       if (doc.exists && doc.data() != null) {
         return UserModel.fromMap(doc.data() as Map<String, dynamic>);
       }
@@ -60,7 +63,10 @@ class DatabaseService {
 
   Future<EventModel?> getEventById(String eventId) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('events').doc(eventId).get();
+      DocumentSnapshot doc = await _firestore
+          .collection('events')
+          .doc(eventId)
+          .get();
       if (doc.exists && doc.data() != null) {
         return EventModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }
@@ -85,10 +91,10 @@ class DatabaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => EventModel.fromMap(doc.data(), doc.id))
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => EventModel.fromMap(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   Future<void> updateEvent(EventModel eventModel) async {
@@ -109,20 +115,24 @@ class DatabaseService {
       throw Exception('Failed to delete event: $e');
     }
   }
+
   Future<String> joinEventWithModel({
     required String eventId,
     required String userId,
   }) async {
     try {
       return await _firestore.runTransaction((transaction) async {
-        DocumentReference eventRef = _firestore.collection('events').doc(eventId);
+        DocumentReference eventRef = _firestore
+            .collection('events')
+            .doc(eventId);
         DocumentSnapshot eventDoc = await transaction.get(eventRef);
 
         if (!eventDoc.exists) {
           return 'Event not found';
         }
 
-        Map<String, dynamic> eventData = eventDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic> eventData =
+            eventDoc.data() as Map<String, dynamic>;
         int maxAttendees = eventData['maxAttendees'] ?? 0;
         int currentAttendees = eventData['currentAttendees'] ?? 0;
 
@@ -130,7 +140,7 @@ class DatabaseService {
         DocumentReference joinRef = _firestore
             .collection('event_participants')
             .doc('${eventId}_$userId');
-            
+
         DocumentSnapshot joinDoc = await transaction.get(joinRef);
 
         if (joinDoc.exists) {
@@ -152,7 +162,9 @@ class DatabaseService {
         transaction.set(joinRef, joinModel.toMap());
 
         // Increment currentAttendees safely in transaction
-        transaction.update(eventRef, {'currentAttendees': currentAttendees + 1});
+        transaction.update(eventRef, {
+          'currentAttendees': currentAttendees + 1,
+        });
 
         return 'Successfully joined the event!';
       });
@@ -177,10 +189,10 @@ class DatabaseService {
         .where('userId', isEqualTo: userId)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => doc.data()['eventId'].toString())
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => doc.data()['eventId'].toString())
+              .toList();
+        });
   }
 
   Stream<List<EventModel>> streamUserJoinedEvents(String userId) {
@@ -190,22 +202,22 @@ class DatabaseService {
         .orderBy('joinedAt', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
-      if (snapshot.docs.isEmpty) return [];
+          if (snapshot.docs.isEmpty) return [];
 
-      List<String> eventIds = snapshot.docs
-          .map((doc) => doc.data()['eventId'].toString())
-          .toList();
-      if (eventIds.isEmpty) return [];
-      
-      var eventsSnapshot = await _firestore
-          .collection('events')
-          .where(FieldPath.documentId, whereIn: eventIds)
-          .get();
+          List<String> eventIds = snapshot.docs
+              .map((doc) => doc.data()['eventId'].toString())
+              .toList();
+          if (eventIds.isEmpty) return [];
 
-      return eventsSnapshot.docs
-          .map((doc) => EventModel.fromMap(doc.data(), doc.id))
-          .toList();
-    });
+          var eventsSnapshot = await _firestore
+              .collection('events')
+              .where(FieldPath.documentId, whereIn: eventIds)
+              .get();
+
+          return eventsSnapshot.docs
+              .map((doc) => EventModel.fromMap(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   Future<void> leaveEvent({
@@ -223,9 +235,10 @@ class DatabaseService {
 
       DocumentSnapshot eventDoc = await transaction.get(eventRef);
       if (eventDoc.exists) {
-        int currentAttendees = (eventDoc.data() as Map<String, dynamic>)['currentAttendees'] ?? 1;
+        int currentAttendees =
+            (eventDoc.data() as Map<String, dynamic>)['currentAttendees'] ?? 1;
         transaction.update(eventRef, {
-          'currentAttendees': currentAttendees > 0 ? currentAttendees - 1 : 0
+          'currentAttendees': currentAttendees > 0 ? currentAttendees - 1 : 0,
         });
       }
 
@@ -241,8 +254,8 @@ class CloudinaryService {
   Future<String?> uploadImage({
     File? imageFile,
     Uint8List? webImageBytes,
-    required String folderName, 
-    required String prefixName, 
+    required String folderName,
+    required String prefixName,
   }) async {
     try {
       CloudinaryResponse? response;

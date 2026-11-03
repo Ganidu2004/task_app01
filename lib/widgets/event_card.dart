@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:task_app/database_services.dart';
 import 'package:task_app/screens/event_page/event_model_page.dart';
 import 'package:task_app/user/user_model.dart';
-import 'package:task_app/widgets/event_details_page.dart'; 
+import 'package:task_app/widgets/event_details_page.dart';
 
 class EventCard extends StatelessWidget {
   final EventModel event;
@@ -30,7 +30,7 @@ class EventCard extends StatelessWidget {
             builder: (context) => EventDetailPage(
               eventId: event.id,
               initialEvent: event,
-              databaseService: databaseService, 
+              databaseService: databaseService,
             ),
           ),
         );
@@ -41,9 +41,7 @@ class EventCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Colors.lightBlue.withValues(
-              alpha: 0.3,
-            ),
+            color: Colors.lightBlue.withValues(alpha: 0.3),
             width: 1.5,
           ),
           boxShadow: [

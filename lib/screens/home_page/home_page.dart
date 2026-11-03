@@ -112,7 +112,7 @@ class HomePage extends StatelessWidget {
                               databaseService: _databaseService,
                               actionButton: ElevatedButton.icon(
                                 onPressed: isEventFull
-                                    ? null 
+                                    ? null
                                     : () async {
                                         String message = await _databaseService
                                             .joinEventWithModel(
