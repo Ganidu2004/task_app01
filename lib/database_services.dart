@@ -11,8 +11,7 @@ import 'package:task_app/user/user_model.dart';
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // --- USER METHODS ---
-
+  // Stream user details from Firestore in real-time
   Stream<UserModel?> streamUserData(String uid) {
     return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
       if (snapshot.exists && snapshot.data() != null) {
@@ -22,13 +21,15 @@ class DatabaseService {
     });
   }
 
+  // Save user details to Firestore
   Future<void> saveUserData(UserModel userModel) async {
     await _firestore
         .collection('users')
         .doc(userModel.uid)
-        .set(userModel.toMap(), SetOptions(merge: true));
+        .set(userModel.toMap());
   }
 
+  // Fetch user details from Firestore by UID
   Future<UserModel?> getUserData(String uid) async {
     try {
       DocumentSnapshot doc = await _firestore
@@ -44,6 +45,7 @@ class DatabaseService {
     }
   }
 
+  // Update user profile details in Firestore (e.g., fullName)
   Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
     try {
       await _firestore.collection('users').doc(uid).update(data);
@@ -52,8 +54,7 @@ class DatabaseService {
     }
   }
 
-  // --- EVENT METHODS ---
-
+  // Create and save the event document in Firestore
   Future<void> createEvent(EventModel eventModel) async {
     await _firestore
         .collection('events')
@@ -61,12 +62,14 @@ class DatabaseService {
         .set(eventModel.toMap());
   }
 
+  // Get single event details by ID
   Future<EventModel?> getEventById(String eventId) async {
     try {
       DocumentSnapshot doc = await _firestore
           .collection('events')
           .doc(eventId)
           .get();
+
       if (doc.exists && doc.data() != null) {
         return EventModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
       }
@@ -76,14 +79,16 @@ class DatabaseService {
     }
   }
 
+  // Stream all events from Firestore in real-time
   Stream<List<EventModel>> streamEvents() {
     return _firestore.collection('events').snapshots().map((snapshot) {
-      return snapshot.docs
-          .map((doc) => EventModel.fromMap(doc.data(), doc.id))
-          .toList();
+      return snapshot.docs.map((doc) {
+        return EventModel.fromMap(doc.data(), doc.id);
+      }).toList();
     });
   }
 
+  // Stream events created by a specific user (Current User)
   Stream<List<EventModel>> streamUserEvents(String currentUserId) {
     return _firestore
         .collection('events')
@@ -91,12 +96,22 @@ class DatabaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => EventModel.fromMap(doc.data(), doc.id))
-              .toList();
+          return snapshot.docs.map((doc) {
+            return EventModel.fromMap(doc.data(), doc.id);
+          }).toList();
         });
   }
 
+  // Stream joined participants count for a specific event in real-time
+  Stream<int> streamEventParticipantsCount(String eventId) {
+    return _firestore
+        .collection('event_participants')
+        .where('eventId', isEqualTo: eventId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  // Edite Event Function
   Future<void> updateEvent(EventModel eventModel) async {
     try {
       await _firestore
@@ -108,6 +123,7 @@ class DatabaseService {
     }
   }
 
+  // Delete Event Function
   Future<void> deleteEvent(String eventId) async {
     try {
       await _firestore.collection('events').doc(eventId).delete();
@@ -116,6 +132,7 @@ class DatabaseService {
     }
   }
 
+  //Event Join Function
   Future<String> joinEventWithModel({
     required String eventId,
     required String userId,
@@ -134,24 +151,28 @@ class DatabaseService {
         Map<String, dynamic> eventData =
             eventDoc.data() as Map<String, dynamic>;
         int maxAttendees = eventData['maxAttendees'] ?? 0;
-        int currentAttendees = eventData['currentAttendees'] ?? 0;
 
-        // Check if user already joined using a composite doc ID: eventId_userId
-        DocumentReference joinRef = _firestore
+        QuerySnapshot participantsSnapshot = await _firestore
             .collection('event_participants')
-            .doc('${eventId}_$userId');
+            .where('eventId', isEqualTo: eventId)
+            .get();
 
-        DocumentSnapshot joinDoc = await transaction.get(joinRef);
+        int currentAttendeesCount = participantsSnapshot.docs.length;
 
-        if (joinDoc.exists) {
+        bool alreadyJoined = participantsSnapshot.docs.any(
+          (doc) => doc['userId'] == userId,
+        );
+        if (alreadyJoined) {
           return 'You have already joined this event!';
         }
 
-        if (currentAttendees >= maxAttendees) {
+        if (currentAttendeesCount >= maxAttendees) {
           return 'Sorry, this event is full! No more slots available.';
         }
 
-        // Save participant
+        DocumentReference joinRef = _firestore
+            .collection('event_participants')
+            .doc();
         EventJoinModel joinModel = EventJoinModel(
           id: joinRef.id,
           eventId: eventId,
@@ -161,11 +182,6 @@ class DatabaseService {
 
         transaction.set(joinRef, joinModel.toMap());
 
-        // Increment currentAttendees safely in transaction
-        transaction.update(eventRef, {
-          'currentAttendees': currentAttendees + 1,
-        });
-
         return 'Successfully joined the event!';
       });
     } catch (e) {
@@ -173,16 +189,7 @@ class DatabaseService {
     }
   }
 
-  // Stream participants count directly from the event document (Zero extra reads!)
-  Stream<int> streamEventParticipantsCount(String eventId) {
-    return _firestore.collection('events').doc(eventId).snapshots().map((doc) {
-      if (doc.exists && doc.data() != null) {
-        return (doc.data() as Map<String, dynamic>)['currentAttendees'] ?? 0;
-      }
-      return 0;
-    });
-  }
-
+  //Get The Join Event Id
   Stream<List<String>> streamJoinedEventIds(String userId) {
     return _firestore
         .collection('event_participants')
@@ -202,21 +209,18 @@ class DatabaseService {
         .orderBy('joinedAt', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
-          if (snapshot.docs.isEmpty) return [];
-
-          List<String> eventIds = snapshot.docs
-              .map((doc) => doc.data()['eventId'].toString())
-              .toList();
-          if (eventIds.isEmpty) return [];
-
-          var eventsSnapshot = await _firestore
-              .collection('events')
-              .where(FieldPath.documentId, whereIn: eventIds)
-              .get();
-
-          return eventsSnapshot.docs
-              .map((doc) => EventModel.fromMap(doc.data(), doc.id))
-              .toList();
+          List<EventModel> events = [];
+          for (var doc in snapshot.docs) {
+            String eventId = doc['eventId'];
+            var eventDoc = await _firestore
+                .collection('events')
+                .doc(eventId)
+                .get();
+            if (eventDoc.exists) {
+              events.add(EventModel.fromMap(eventDoc.data()!, eventDoc.id));
+            }
+          }
+          return events;
         });
   }
 
@@ -224,26 +228,26 @@ class DatabaseService {
     required String eventId,
     required String userId,
   }) async {
-    DocumentReference eventRef = _firestore.collection('events').doc(eventId);
-    DocumentReference joinRef = _firestore
+    var querySnapshot = await _firestore
         .collection('event_participants')
-        .doc('${eventId}_$userId');
+        .where('eventId', isEqualTo: eventId)
+        .where('userId', isEqualTo: userId)
+        .get();
 
-    await _firestore.runTransaction((transaction) async {
-      DocumentSnapshot joinDoc = await transaction.get(joinRef);
-      if (!joinDoc.exists) return;
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
 
-      DocumentSnapshot eventDoc = await transaction.get(eventRef);
-      if (eventDoc.exists) {
-        int currentAttendees =
-            (eventDoc.data() as Map<String, dynamic>)['currentAttendees'] ?? 1;
-        transaction.update(eventRef, {
-          'currentAttendees': currentAttendees > 0 ? currentAttendees - 1 : 0,
-        });
-      }
+  Future<int> getRemainingSlots(String eventId, int maxAttendees) async {
+    QuerySnapshot participantsSnapshot = await _firestore
+        .collection('event_participants')
+        .where('eventId', isEqualTo: eventId)
+        .get();
 
-      transaction.delete(joinRef);
-    });
+    int currentCount = participantsSnapshot.docs.length;
+    int remaining = maxAttendees - currentCount;
+    return remaining > 0 ? remaining : 0;
   }
 }
 
