@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:task_app/screens/event_page/event_model_page.dart';
 import 'package:task_app/screens/my_event_page/created_event_page.dart';
+import 'package:task_app/screens/my_event_page/joined_event_page.dart';
 
 class MyEventPage extends StatefulWidget {
   const MyEventPage({super.key});
@@ -10,7 +10,6 @@ class MyEventPage extends StatefulWidget {
 }
 
 class _MyEventPageState extends State<MyEventPage> {
-  final List<EventModel> joinedEvents = [];
 
   @override
   Widget build(BuildContext context) {
@@ -57,36 +56,13 @@ class _MyEventPageState extends State<MyEventPage> {
                 children: [
                   MyCreatedEventsScreen(),
                   // 2. Joined Events Section
-                  _buildEventList(joinedEvents, "You haven't joined any events yet!"),
+                 MyJoinedEventsScreen()
                 ],
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildEventList(List<EventModel> events, String emptyMessage) {
-    if (events.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Text(
-            emptyMessage,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: events.length,
-      itemBuilder: (context, index) {
-        final event = events[index];
-        return Text(event.title); 
-      },
     );
   }
 }

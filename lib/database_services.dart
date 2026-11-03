@@ -185,6 +185,43 @@ class DatabaseService {
         });
   }
 
+  Stream<List<EventModel>> streamUserJoinedEvents(String userId) {
+    return _firestore
+        .collection('event_participants')
+        .where('userId', isEqualTo: userId)
+        .orderBy('joinedAt', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+          List<EventModel> events = [];
+          for (var doc in snapshot.docs) {
+            String eventId = doc['eventId'];
+            var eventDoc = await _firestore
+                .collection('events')
+                .doc(eventId)
+                .get();
+            if (eventDoc.exists) {
+              events.add(EventModel.fromMap(eventDoc.data()!, eventDoc.id));
+            }
+          }
+          return events;
+        });
+  }
+
+  Future<void> leaveEvent({
+    required String eventId,
+    required String userId,
+  }) async {
+    var querySnapshot = await _firestore
+        .collection('event_participants')
+        .where('eventId', isEqualTo: eventId)
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
+
   Future<int> getRemainingSlots(String eventId, int maxAttendees) async {
     QuerySnapshot participantsSnapshot = await _firestore
         .collection('event_participants')
@@ -204,8 +241,8 @@ class CloudinaryService {
   Future<String?> uploadImage({
     File? imageFile,
     Uint8List? webImageBytes,
-    required String folderName, // e.g., 'profile_images' or 'event_images'
-    required String prefixName, // e.g., 'profile' or 'event'
+    required String folderName, 
+    required String prefixName, 
   }) async {
     try {
       CloudinaryResponse? response;
