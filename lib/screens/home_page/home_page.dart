@@ -98,8 +98,6 @@ class HomePage extends StatelessWidget {
                       itemCount: otherEvents.length,
                       itemBuilder: (context, index) {
                         final event = otherEvents[index];
-
-                        // **මෙතැනදී එක් එක් event එකේ real-time count එක බලලා button එක manage කරනු ලැබේ**
                         return StreamBuilder<int>(
                           stream: _databaseService.streamEventParticipantsCount(
                             event.id,
@@ -114,7 +112,7 @@ class HomePage extends StatelessWidget {
                               databaseService: _databaseService,
                               actionButton: ElevatedButton.icon(
                                 onPressed: isEventFull
-                                    ? null // Event එක Full නම් button එක disable වේ
+                                    ? null 
                                     : () async {
                                         String message = await _databaseService
                                             .joinEventWithModel(
