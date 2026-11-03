@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:task_app/constants.dart';
 import 'package:task_app/database_services.dart';
 import 'package:task_app/screens/event_page/edite_event_page.dart';
 import 'package:task_app/screens/event_page/event_model_page.dart';
@@ -145,22 +146,18 @@ class MyCreatedEventsScreen extends StatelessWidget {
                                   await _databaseService.deleteEvent(event.id);
 
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Event deleted successfully!',
-                                        ),
-                                      ),
+                                    AppConstants.showCustomSnackBar(
+                                      context, 
+                                      'Event deleted successfully!',
+                                      isError: false,
                                     );
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Failed to delete event: $e',
-                                        ),
-                                      ),
+                                    AppConstants.showCustomSnackBar(
+                                      context, 
+                                      'Failed to delete event: $e',
+                                      isError: true,
                                     );
                                   }
                                 }
