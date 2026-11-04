@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:task_app/main.dart';
 import 'package:task_app/modles/comment_modle.dart';
-import 'package:task_app/screens/event_page/event_model_page.dart';
-import 'package:task_app/screens/home_page/join_event_modele.dart';
-import 'package:task_app/user/user_model.dart';
+import 'package:task_app/modles/event_modle.dart';
+import 'package:task_app/modles/join_event_modle.dart';
+import 'package:task_app/modles/user_modle.dart';
 
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

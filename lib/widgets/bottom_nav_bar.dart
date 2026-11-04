@@ -2,12 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:task_app/database_services.dart';
+import 'package:task_app/modles/user_modle.dart';
 import 'package:task_app/screens/event_page/create_event_page.dart';
 import 'package:task_app/screens/explore_page/explore_page.dart';
 import 'package:task_app/screens/home_page/home_page.dart';
 import 'package:task_app/screens/my_event_page/my_event_page.dart';
 import 'package:task_app/screens/user_profile_page/user_profile_page.dart';
-import 'package:task_app/user/user_model.dart';
 
 class BottomNavBar extends StatefulWidget {
   final String? userImageUrl;

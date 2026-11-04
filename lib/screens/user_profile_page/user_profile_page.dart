@@ -7,8 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task_app/constants.dart';
 import 'package:task_app/database_services.dart';
+import 'package:task_app/modles/user_modle.dart';
 import 'package:task_app/user/loging_page.dart';
-import 'package:task_app/user/user_model.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});

@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:task_app/constants.dart';
 import 'package:task_app/database_services.dart';
 import 'package:task_app/modles/comment_modle.dart';
-import 'package:task_app/screens/event_page/event_model_page.dart';
-import 'package:task_app/user/user_model.dart';
+import 'package:task_app/modles/event_modle.dart';
+import 'package:task_app/modles/user_modle.dart';
 
 class EventDetailPage extends StatefulWidget {
   final String eventId;

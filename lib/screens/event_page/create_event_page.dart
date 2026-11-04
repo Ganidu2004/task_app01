@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:task_app/constants.dart';
 import 'package:task_app/database_services.dart';
-import 'package:task_app/screens/event_page/event_model_page.dart';
+import 'package:task_app/modles/event_modle.dart';
 import 'package:task_app/widgets/bottom_nav_bar.dart';
 
 class EventCreatePage extends StatefulWidget {
