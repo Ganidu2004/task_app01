@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:task_app/constants.dart';
 import 'package:task_app/database_services.dart';
 import 'package:task_app/modles/comment_modle.dart';
 import 'package:task_app/screens/event_page/event_model_page.dart';
@@ -57,7 +58,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       );
 
       if (!mounted) return;
-      
+
       _commentController.clear();
       FocusScope.of(context).unfocus();
     } catch (e) {
@@ -524,6 +525,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                   const SizedBox(height: 12),
                               itemBuilder: (context, index) {
                                 final comment = comments[index];
+                                final currentUserId =
+                                    FirebaseAuth.instance.currentUser?.uid;
+                                final bool isMyComment =
+                                    currentUserId != null &&
+                                    comment.uid == currentUserId;
 
                                 return FutureBuilder<UserModel?>(
                                   future: widget.databaseService.getUserData(
@@ -594,18 +600,142 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                                         ),
                                                       ),
                                                     ),
-                                                    Text(
-                                                      DateFormat(
-                                                        'MMM d, h:mm a',
-                                                      ).format(
-                                                        comment.timestamp,
-                                                      ),
-                                                      style: TextStyle(
-                                                        fontSize: 10,
-                                                        color: Colors
-                                                            .grey
-                                                            .shade500,
-                                                      ),
+                                                    Row(
+                                                      children: [
+                                                        Text(
+                                                          DateFormat(
+                                                            'MMM d, h:mm a',
+                                                          ).format(
+                                                            comment.timestamp,
+                                                          ),
+                                                          style: TextStyle(
+                                                            fontSize: 10,
+                                                            color: Colors
+                                                                .grey
+                                                                .shade500,
+                                                          ),
+                                                        ),
+
+                                                        // User ge comment ekak nam witharak delete button eka pennanawa
+                                                        if (isMyComment) ...[
+                                                          const SizedBox(
+                                                            width: 4,
+                                                          ),
+                                                          PopupMenuButton<
+                                                            String
+                                                          >(
+                                                            padding:
+                                                                EdgeInsets.zero,
+                                                            elevation: 4,
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
+                                                            ),
+                                                            offset:
+                                                                const Offset(
+                                                                  0,
+                                                                  30,
+                                                                ),
+                                                            icon: Container(
+                                                              padding:
+                                                                  const EdgeInsets.all(
+                                                                    4,
+                                                                  ),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                    color: Colors
+                                                                        .grey
+                                                                        .shade100,
+                                                                    shape: BoxShape
+                                                                        .circle,
+                                                                  ),
+                                                              child: const Icon(
+                                                                Icons
+                                                                    .more_vert_rounded,
+                                                                size: 14,
+                                                                color: Color(
+                                                                  0xFF64748B,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            onSelected: (value) async {
+                                                              if (value ==
+                                                                  'delete') {
+                                                                try {
+                                                                  await widget
+                                                                      .databaseService
+                                                                      .deleteComment(
+                                                                        event
+                                                                            .id,
+                                                                        comment
+                                                                            .commentId,
+                                                                      );
+
+                                                                  if (context
+                                                                      .mounted) {
+                                                                    AppConstants.showCustomSnackBar(
+                                                                      context,
+                                                                      'Comment deleted successfully',
+                                                                    );
+                                                                  }
+                                                                } catch (e) {
+                                                                  if (context
+                                                                      .mounted) {
+                                                                    AppConstants.showCustomSnackBar(
+                                                                      context,
+                                                                      'Failed to delete: $e',
+                                                                      isError:
+                                                                          true,
+                                                                    );
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            itemBuilder:
+                                                                (
+                                                                  BuildContext
+                                                                  context,
+                                                                ) => [
+                                                                  PopupMenuItem<
+                                                                    String
+                                                                  >(
+                                                                    value:
+                                                                        'delete',
+                                                                    height: 36,
+                                                                    child: Row(
+                                                                      children: const [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .delete_outline_rounded,
+                                                                          color:
+                                                                              Colors.redAccent,
+                                                                          size:
+                                                                              16,
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              8,
+                                                                        ),
+                                                                        Text(
+                                                                          'Delete',
+                                                                          style: TextStyle(
+                                                                            color:
+                                                                                Colors.redAccent,
+                                                                            fontSize:
+                                                                                12.5,
+                                                                            fontWeight:
+                                                                                FontWeight.w600,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                          ),
+                                                        ],
+                                                      ],
                                                     ),
                                                   ],
                                                 ),
