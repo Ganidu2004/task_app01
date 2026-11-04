@@ -1,10 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:task_app/database_services.dart';
+import 'package:task_app/modles/comment_modle.dart';
 import 'package:task_app/screens/event_page/event_model_page.dart';
 import 'package:task_app/user/user_model.dart';
 
-class EventDetailPage extends StatelessWidget {
+class EventDetailPage extends StatefulWidget {
   final String eventId;
   final DatabaseService databaseService;
   final EventModel? initialEvent;
@@ -17,82 +19,619 @@ class EventDetailPage extends StatelessWidget {
   });
 
   @override
+  State<EventDetailPage> createState() => _EventDetailPageState();
+}
+
+class _EventDetailPageState extends State<EventDetailPage> {
+  final TextEditingController _commentController = TextEditingController();
+  bool _isSending = false;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendComment() async {
+    final text = _commentController.text.trim();
+    if (text.isEmpty) return;
+
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to add a comment'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSending = true);
+
+    try {
+      await widget.databaseService.addComment(
+        uid: currentUserId,
+        eventId: widget.eventId,
+        commentText: text,
+      );
+
+      if (!mounted) return;
+      
+      _commentController.clear();
+      FocusScope.of(context).unfocus();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to post comment: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF4F6F9),
       body: FutureBuilder<EventModel?>(
-        future: databaseService.getEventById(eventId),
+        future: widget.databaseService.getEventById(widget.eventId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            if (initialEvent != null) {
-              return _buildEventContent(context, initialEvent!);
+            if (widget.initialEvent != null) {
+              return _buildEventUI(context, widget.initialEvent!);
             }
             return const Center(
-              child: CircularProgressIndicator(color: Colors.lightBlue),
+              child: CircularProgressIndicator(color: Colors.lightBlueAccent),
             );
           }
 
           if (snapshot.hasError) {
             return Center(
-              child: Text('Error loading event details: ${snapshot.error}'),
+              child: Text(
+                'Error loading event: ${snapshot.error}',
+                style: const TextStyle(color: Colors.redAccent),
+              ),
             );
           }
 
-          final event = snapshot.data ?? initialEvent;
+          final event = snapshot.data ?? widget.initialEvent;
           if (event == null) {
             return const Center(child: Text('Event details not found.'));
           }
-          return _buildEventContent(context, event);
+          return _buildEventUI(context, event);
         },
       ),
     );
   }
 
-  Widget _buildEventContent(BuildContext context, EventModel event) {
-    return Stack(
+  Widget _buildEventUI(BuildContext context, EventModel event) {
+    return Column(
       children: [
-        // 1. Background Image & Header
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 320,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (event.imageUrl != null && event.imageUrl!.isNotEmpty)
-                Image.network(
-                  event.imageUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[300],
-                    child: const Icon(
-                      Icons.broken_image,
-                      size: 60,
-                      color: Colors.grey,
+        Expanded(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // 1. Creative Hero Image Header with Parallax & Back Button
+              SliverAppBar(
+                expandedHeight: 280.0,
+                floating: false,
+                pinned: true,
+                elevation: 0,
+                backgroundColor: Colors.white,
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black.withValues(alpha: 0.4),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ),
-                )
-              else
-                Container(
-                  color: Colors.lightBlue[100],
-                  child: const Icon(
-                    Icons.event,
-                    size: 80,
-                    color: Colors.lightBlue,
+                ),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (event.imageUrl != null && event.imageUrl!.isNotEmpty)
+                        Image.network(
+                          event.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            color: Colors.blueGrey.shade100,
+                            child: const Icon(
+                              Icons.broken_image,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.lightBlue.shade300,
+                                Colors.blueAccent.shade700,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.event_note,
+                            size: 90,
+                            color: Colors.white,
+                          ),
+                        ),
+                      // Gradient Overlay for readability
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.4),
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.6),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              // Dark Gradient Overlay for better contrast
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.5),
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.2),
-                    ],
+              ),
+
+              // 2. Main Content Details Body
+              SliverToBoxAdapter(
+                child: Container(
+                  transform: Matrix4.translationValues(0.0, -20.0, 0.0),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF4F6F9),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(28),
+                      topRight: Radius.circular(28),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category Badge & Attendees Status
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent.withValues(
+                                  alpha: 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                event.category.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.blueAccent,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ),
+                            StreamBuilder<int>(
+                              stream: widget.databaseService
+                                  .streamEventParticipantsCount(event.id),
+                              builder: (context, countSnapshot) {
+                                int joinedCount = countSnapshot.data ?? 0;
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.people_alt_rounded,
+                                        size: 16,
+                                        color: Colors.orange,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '$joinedCount / ${event.maxAttendees} Joined',
+                                        style: const TextStyle(
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Title
+                        Text(
+                          event.title,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Info Cards Grid Container
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildInfoTile(
+                                icon: Icons.calendar_month_rounded,
+                                iconBg: Colors.green.shade50,
+                                iconColor: Colors.green,
+                                title: 'Date',
+                                value: DateFormat(
+                                  'EEEE, dd MMMM yyyy',
+                                ).format(event.date),
+                              ),
+                              const Divider(height: 20, thickness: 0.8),
+                              _buildInfoTile(
+                                icon: Icons.schedule_rounded,
+                                iconBg: Colors.blue.shade50,
+                                iconColor: Colors.blueAccent,
+                                title: 'Time',
+                                value: event.time,
+                              ),
+                              const Divider(height: 20, thickness: 0.8),
+                              _buildInfoTile(
+                                icon: Icons.location_on_rounded,
+                                iconBg: Colors.red.shade50,
+                                iconColor: Colors.redAccent,
+                                title: 'Location',
+                                value: event.place,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Organizer Card
+                        FutureBuilder<UserModel?>(
+                          future: widget.databaseService.getUserData(
+                            event.organizerId,
+                          ),
+                          builder: (context, userSnapshot) {
+                            final user = userSnapshot.data;
+                            final userName = user?.fullName ?? 'Organizer';
+                            final userImage = user?.profileImageUrl;
+
+                            return Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: Colors.blueAccent
+                                        .withValues(alpha: 0.1),
+                                    backgroundImage:
+                                        userImage != null &&
+                                            userImage.isNotEmpty
+                                        ? NetworkImage(userImage)
+                                        : null,
+                                    child:
+                                        userImage == null || userImage.isEmpty
+                                        ? const Icon(
+                                            Icons.person_rounded,
+                                            color: Colors.blueAccent,
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Organized by',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      Text(
+                                        userName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Description Section
+                        const Text(
+                          'About Event',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          event.description,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.6,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+
+                        // Comments Title Header
+                        Row(
+                          children: const [
+                            Icon(
+                              Icons.forum_rounded,
+                              color: Colors.blueAccent,
+                              size: 22,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Discussion & Comments',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // 3. Creative Comments Stream List
+                        StreamBuilder<List<CommentModel>>(
+                          stream: widget.databaseService.streamEventComments(
+                            event.id,
+                          ),
+                          builder: (context, commentSnapshot) {
+                            if (commentSnapshot.hasError) {
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Error loading comments: ${commentSnapshot.error}',
+                                  style: const TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            if (commentSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20.0),
+                                  child: CircularProgressIndicator(
+                                    color: Colors.blueAccent,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final comments = commentSnapshot.data ?? [];
+                            if (comments.isEmpty) {
+                              return Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Column(
+                                  children: const [
+                                    Icon(
+                                      Icons.chat_bubble_outline_rounded,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'No comments yet.',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Be the first to share your thoughts!',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: comments.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final comment = comments[index];
+
+                                return FutureBuilder<UserModel?>(
+                                  future: widget.databaseService.getUserData(
+                                    comment.uid,
+                                  ),
+                                  builder: (context, userSnap) {
+                                    final user = userSnap.data;
+                                    final userName = user?.fullName ?? 'User';
+                                    final userImage = user?.profileImageUrl;
+
+                                    return Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.015,
+                                            ),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 18,
+                                            backgroundColor: Colors.blueAccent
+                                                .withValues(alpha: 0.1),
+                                            backgroundImage:
+                                                userImage != null &&
+                                                    userImage.isNotEmpty
+                                                ? NetworkImage(userImage)
+                                                : null,
+                                            child:
+                                                userImage == null ||
+                                                    userImage.isEmpty
+                                                ? const Icon(
+                                                    Icons.person,
+                                                    size: 18,
+                                                    color: Colors.blueAccent,
+                                                  )
+                                                : null,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      userName,
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 13,
+                                                        color: Color(
+                                                          0xFF1E293B,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      DateFormat(
+                                                        'MMM d, h:mm a',
+                                                      ).format(
+                                                        comment.timestamp,
+                                                      ),
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors
+                                                            .grey
+                                                            .shade500,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  comment.commentText,
+                                                  style: const TextStyle(
+                                                    fontSize: 13.5,
+                                                    height: 1.4,
+                                                    color: Color(0xFF334155),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -100,235 +639,72 @@ class EventDetailPage extends StatelessWidget {
           ),
         ),
 
-        // 2. Custom Floating Back Button
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 8,
-          left: 16,
-          child: CircleAvatar(
-            backgroundColor: Colors.white.withValues(alpha: 0.9),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black87),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-        ),
-
-        // 3. Scrollable Details Sheet
-        Positioned.fill(
-          top: 280,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(30),
-                topRight: Radius.circular(30),
+        // 4. Creative Sticky Bottom Comment Bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -4),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, -5),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _commentController,
+                    decoration: InputDecoration(
+                      hintText: 'Write a public comment...',
+                      hintStyle: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade400,
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF1F5F9),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Material(
+                  color: Colors.blueAccent,
+                  borderRadius: BorderRadius.circular(25),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(25),
+                    onTap: _isSending ? null : _sendComment,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: _isSending
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.send_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                    ),
+                  ),
                 ),
               ],
-            ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Category Chip & Real-time Participants Badge
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.lightBlue.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          event.category,
-                          style: const TextStyle(
-                            color: Colors.lightBlue,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      // Real-time Joined Count Badge
-                      StreamBuilder<int>(
-                        stream: databaseService.streamEventParticipantsCount(
-                          event.id,
-                        ),
-                        builder: (context, countSnapshot) {
-                          int joinedCount = countSnapshot.data ?? 0;
-                          return Row(
-                            children: [
-                              const Icon(
-                                Icons.group,
-                                size: 16,
-                                color: Colors.orange,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$joinedCount / ${event.maxAttendees} Joined',
-                                style: const TextStyle(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Title
-                  Text(
-                    event.title,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Date, Time & Location Cards Container
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildInfoRow(
-                          icon: Icons.calendar_today,
-                          iconColor: Colors.green,
-                          title: 'Date',
-                          value: DateFormat(
-                            'EEEE, dd MMM yyyy',
-                          ).format(event.date),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 10),
-                          child: Divider(height: 1),
-                        ),
-                        _buildInfoRow(
-                          icon: Icons.access_time_rounded,
-                          iconColor: Colors.lightBlue,
-                          title: 'Time',
-                          value: event.time,
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 10),
-                          child: Divider(height: 1),
-                        ),
-                        _buildInfoRow(
-                          icon: Icons.location_on_rounded,
-                          iconColor: Colors.red,
-                          title: 'Location',
-                          value: event.place,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Organizer Profile Section
-                  FutureBuilder<UserModel?>(
-                    future: databaseService.getUserData(event.organizerId),
-                    builder: (context, userSnapshot) {
-                      final user = userSnapshot.data;
-                      final userName = user?.fullName ?? 'Organizer';
-                      final userImage = user?.profileImageUrl;
-
-                      return Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.lightBlue.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.lightBlue.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: Colors.lightBlue.withValues(
-                                alpha: 0.2,
-                              ),
-                              backgroundImage:
-                                  userImage != null && userImage.isNotEmpty
-                                  ? NetworkImage(userImage)
-                                  : null,
-                              child: userImage == null || userImage.isEmpty
-                                  ? const Icon(
-                                      Icons.person,
-                                      color: Colors.lightBlue,
-                                    )
-                                  : null,
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Organized by',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  userName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // About Event Description Section
-                  const Text(
-                    'About Event',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    event.description,
-                    style: TextStyle(
-                      fontSize: 15,
-                      height: 1.6,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ),
@@ -336,9 +712,10 @@ class EventDetailPage extends StatelessWidget {
     );
   }
 
-  // Helper Widget for structured rows
-  Widget _buildInfoRow({
+  // Structured Info Row Helper
+  Widget _buildInfoTile({
     required IconData icon,
+    required Color iconBg,
     required Color iconColor,
     required String title,
     required String value,
@@ -348,8 +725,8 @@ class EventDetailPage extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            color: iconBg,
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: iconColor, size: 20),
         ),
@@ -360,15 +737,15 @@ class EventDetailPage extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: Color(0xFF1E293B),
                 ),
               ),
             ],

@@ -4,6 +4,7 @@ import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:task_app/main.dart';
+import 'package:task_app/modles/comment_modle.dart';
 import 'package:task_app/screens/event_page/event_model_page.dart';
 import 'package:task_app/screens/home_page/join_event_modele.dart';
 import 'package:task_app/user/user_model.dart';
@@ -224,6 +225,7 @@ class DatabaseService {
         });
   }
 
+  // leave the event method
   Future<void> leaveEvent({
     required String eventId,
     required String userId,
@@ -237,6 +239,32 @@ class DatabaseService {
     for (var doc in querySnapshot.docs) {
       await doc.reference.delete();
     }
+  }
+
+  //comment save method
+  Future<void> addComment({
+    required String uid,
+    required String eventId,
+    required String commentText,
+  }) async {
+    await _firestore.collection('comments').add({
+      'uid': uid,
+      'eventId': eventId,
+      'commentText': commentText,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  //fetch the comment method
+  Stream<List<CommentModel>> streamEventComments(String eventId) {
+    return _firestore
+        .collection('comments')
+        .where('eventId', isEqualTo: eventId)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => CommentModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   Future<int> getRemainingSlots(String eventId, int maxAttendees) async {
