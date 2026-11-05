@@ -31,7 +31,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
     const UserProfilePage(),
   ];
 
- // Helper method to get the user stream
+  // Helper method to get the user stream
   Stream<UserModel?> _getUserStream() {
     String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     if (uid.isEmpty) return Stream.value(null);
@@ -40,6 +40,12 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final Color navBarColor = isDarkMode
+        ? const Color(0xFF00008B)
+        : Colors.lightBlue;
+
     return StreamBuilder<UserModel?>(
       stream: _getUserStream(),
       builder: (context, snapshot) {
@@ -47,21 +53,25 @@ class _BottomNavBarState extends State<BottomNavBar> {
         if (snapshot.hasData && snapshot.data != null) {
           profileImageUrl = snapshot.data!.profileImageUrl;
         }
-        if ((profileImageUrl == null || profileImageUrl.isEmpty) && 
+        if ((profileImageUrl == null || profileImageUrl.isEmpty) &&
             widget.userImageUrl != null) {
           profileImageUrl = widget.userImageUrl;
         }
 
         return Scaffold(
-          backgroundColor: Colors.grey[100],
+          backgroundColor: isDarkMode
+              ? const Color(0xFF121212)
+              : Colors.grey[100],
           body: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _pages[_currentIndex],
           ),
           bottomNavigationBar: CurvedNavigationBar(
             backgroundColor: Colors.transparent,
-            color: Colors.lightBlue,
-            buttonBackgroundColor: Colors.lightBlueAccent,
+            color: navBarColor,
+            buttonBackgroundColor: isDarkMode
+                ? const Color(0xFF00008B)
+                : Colors.lightBlue,
             height: 60,
             animationDuration: const Duration(milliseconds: 300),
             animationCurve: Curves.easeInOut,
@@ -71,12 +81,13 @@ class _BottomNavBarState extends State<BottomNavBar> {
               const Icon(Icons.search, size: 28, color: Colors.white),
               const Icon(Icons.add_circle, size: 32, color: Colors.white),
               const Icon(Icons.event, size: 28, color: Colors.white),
-              
+
               // Dynamic CircleAvatar for User Profile Image
               CircleAvatar(
                 radius: 22,
                 backgroundColor: Colors.white24,
-                backgroundImage: (profileImageUrl != null && profileImageUrl.isNotEmpty)
+                backgroundImage:
+                    (profileImageUrl != null && profileImageUrl.isNotEmpty)
                     ? NetworkImage(profileImageUrl)
                     : null,
                 child: (profileImageUrl == null || profileImageUrl.isEmpty)
@@ -95,6 +106,3 @@ class _BottomNavBarState extends State<BottomNavBar> {
     );
   }
 }
-
-
-

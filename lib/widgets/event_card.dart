@@ -21,6 +21,8 @@ class EventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     String formattedDate = DateFormat('dd MMM yyyy').format(event.date);
 
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     // 1. Wrap the entire card with GestureDetector to handle taps
     return GestureDetector(
       onTap: () {
@@ -38,7 +40,7 @@ class EventCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: Colors.lightBlue.withValues(alpha: 0.3),
@@ -102,7 +104,9 @@ class EventCard extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: isDarkMode
+                              ? const Color(0xFF2C2C2C).withValues(alpha: 0.9)
+                              : Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
@@ -136,10 +140,10 @@ class EventCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             event.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: isDarkMode ? Colors.white : Colors.black87,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -241,8 +245,10 @@ class EventCard extends StatelessWidget {
                         const SizedBox(width: 10),
                         Text(
                           event.place,
-                          style: const TextStyle(
-                            color: Colors.black54,
+                          style: TextStyle(
+                            color: isDarkMode
+                                ? Colors.grey[400]
+                                : Colors.black54,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -256,7 +262,9 @@ class EventCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
+                            color: Colors.green.withValues(
+                              alpha: isDarkMode ? 0.2 : 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
@@ -268,19 +276,21 @@ class EventCard extends StatelessWidget {
                         const SizedBox(width: 10),
                         Text(
                           '$formattedDate  •  ${event.time}',
-                          style: const TextStyle(
-                            color: Colors.black54,
+                          style: TextStyle(
+                            color: isDarkMode
+                                ? Colors.grey[300]
+                                : Colors.black54,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: 14.0),
                       child: Divider(
                         height: 1,
                         thickness: 1,
-                        color: Colors.black12,
+                        color: isDarkMode ? Colors.grey[800] : Colors.black12,
                       ),
                     ),
 
@@ -337,10 +347,12 @@ class EventCard extends StatelessWidget {
                                 ),
                                 Text(
                                   userName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
-                                    color: Colors.black87,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : Colors.black87,
                                   ),
                                 ),
                               ],

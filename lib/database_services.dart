@@ -262,22 +262,24 @@ class DatabaseService {
         .where('eventId', isEqualTo: eventId)
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CommentModel.fromMap(doc.data(), doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CommentModel.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
   }
 
   //delete the comment method
   Future<void> deleteComment(String eventId, String commentId) async {
-  try {
-    await FirebaseFirestore.instance
-        .collection('comments') 
-        .doc(commentId)
-        .delete();
-  } catch (e) {
-    throw Exception('Failed to delete comment: $e');
+    try {
+      await FirebaseFirestore.instance
+          .collection('comments')
+          .doc(commentId)
+          .delete();
+    } catch (e) {
+      throw Exception('Failed to delete comment: $e');
+    }
   }
-}
 
   Future<int> getRemainingSlots(String eventId, int maxAttendees) async {
     QuerySnapshot participantsSnapshot = await _firestore

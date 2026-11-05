@@ -105,11 +105,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: 
-                AppDecorations.authInputDecoration(
-                    labelText: 'Email Address', 
-                    prefixIcon: Icons.email
-                  ),
+                decoration: AppDecorations.authInputDecoration(
+                  null,
+                  labelText: 'Email Address',
+                  prefixIcon: Icons.email,
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter your email';

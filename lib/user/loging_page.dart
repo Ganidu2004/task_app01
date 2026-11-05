@@ -112,8 +112,9 @@ class _LoginPageState extends State<LoginPage> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Email Address', 
-                    prefixIcon: Icons.email
+                    null,
+                    labelText: 'Email Address',
+                    prefixIcon: Icons.email,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -134,8 +135,9 @@ class _LoginPageState extends State<LoginPage> {
                   controller: _passwordController,
                   obscureText: true,
                   decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Password', 
-                    prefixIcon: Icons.lock
+                    null,
+                    labelText: 'Password',
+                    prefixIcon: Icons.lock,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {

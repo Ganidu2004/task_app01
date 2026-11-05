@@ -116,7 +116,7 @@ class MyJoinedEventsScreen extends StatelessWidget {
 
                               if (context.mounted) {
                                 AppConstants.showCustomSnackBar(
-                                  context, 
+                                  context,
                                   'Successfully left the event!',
                                   isError: false,
                                 );
@@ -124,7 +124,7 @@ class MyJoinedEventsScreen extends StatelessWidget {
                             } catch (e) {
                               if (context.mounted) {
                                 AppConstants.showCustomSnackBar(
-                                  context, 
+                                  context,
                                   'Failed to leave event: $e',
                                   isError: true,
                                 );

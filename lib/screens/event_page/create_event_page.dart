@@ -68,6 +68,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
   // Date Picker function
   Future<void> _pickDate() async {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -75,13 +76,18 @@ class _EventCreatePageState extends State<EventCreatePage> {
       lastDate: DateTime(DateTime.now().year + 5),
       builder: (context, child) {
         return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: Colors.lightBlue,
-            colorScheme: const ColorScheme.light(primary: Colors.lightBlue),
-            buttonTheme: const ButtonThemeData(
-              textTheme: ButtonTextTheme.primary,
-            ),
-          ),
+          data: isDarkMode
+              ? ThemeData.dark().copyWith(
+                  colorScheme: const ColorScheme.dark(
+                    primary: Colors.lightBlue,
+                  ),
+                )
+              : ThemeData.light().copyWith(
+                  primaryColor: Colors.lightBlue,
+                  colorScheme: const ColorScheme.light(
+                    primary: Colors.lightBlue,
+                  ),
+                ),
           child: child!,
         );
       },
@@ -95,15 +101,24 @@ class _EventCreatePageState extends State<EventCreatePage> {
 
   // Time Picker function
   Future<void> _pickTime() async {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
       builder: (context, child) {
         return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: Colors.lightBlue,
-            colorScheme: const ColorScheme.light(primary: Colors.lightBlue),
-          ),
+          data: isDarkMode
+              ? ThemeData.dark().copyWith(
+                  colorScheme: const ColorScheme.dark(
+                    primary: Colors.lightBlue,
+                  ),
+                )
+              : ThemeData.light().copyWith(
+                  primaryColor: Colors.lightBlue,
+                  colorScheme: const ColorScheme.light(
+                    primary: Colors.lightBlue,
+                  ),
+                ),
           child: child!,
         );
       },
@@ -115,8 +130,6 @@ class _EventCreatePageState extends State<EventCreatePage> {
     }
   }
 
- 
-
   // Submit and save event to Firestore
   Future<void> _submitEvent() async {
     if (!_formKey.currentState!.validate()) return;
@@ -127,7 +140,11 @@ class _EventCreatePageState extends State<EventCreatePage> {
       final User? currentUser = FirebaseAuth.instance.currentUser;
 
       if (currentUser == null) {
-        AppConstants.showCustomSnackBar(context, 'Please login first!', isError: true);
+        AppConstants.showCustomSnackBar(
+          context,
+          'Please login first!',
+          isError: true,
+        );
         setState(() => _isLoading = false);
         return;
       }
@@ -136,7 +153,10 @@ class _EventCreatePageState extends State<EventCreatePage> {
       final String formattedTime = _selectedTime.format(context);
 
       // Generate a document reference ID for the event
-      final String docId = FirebaseFirestore.instance.collection('events').doc().id;
+      final String docId = FirebaseFirestore.instance
+          .collection('events')
+          .doc()
+          .id;
 
       // 1. Upload image using CloudinaryService
       String? imageUrl = await _cloudinaryService.uploadImage(
@@ -144,7 +164,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         webImageBytes: _webImageBytes,
         folderName: 'event_images',
         prefixName: 'event',
-);
+      );
 
       // Create EventModel instance with auto-saved current user UID
       EventModel newEvent = EventModel(
@@ -156,7 +176,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
         date: _selectedDate,
         time: formattedTime,
         maxAttendees: int.parse(_maxAttendeesController.text.trim()),
-        organizerId: currentUser.uid, 
+        organizerId: currentUser.uid,
         imageUrl: imageUrl,
         createdAt: DateTime.now(),
       );
@@ -167,7 +187,11 @@ class _EventCreatePageState extends State<EventCreatePage> {
       setState(() => _isLoading = false);
 
       if (!mounted) return;
-      AppConstants.showCustomSnackBar(context, 'Event created successfully!', isError: false);
+      AppConstants.showCustomSnackBar(
+        context,
+        'Event created successfully!',
+        isError: false,
+      );
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -177,17 +201,29 @@ class _EventCreatePageState extends State<EventCreatePage> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (!mounted) return;
-      AppConstants.showCustomSnackBar(context, 'Failed to create event: $e', isError: true);
+      AppConstants.showCustomSnackBar(
+        context,
+        'Failed to create event: $e',
+        isError: true,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
       appBar: AppBar(
-        title: const Text('Create New Event', style: TextStyle(fontWeight: FontWeight.bold),),
+        title: const Text(
+          'Create New Event',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.lightBlue,
+        backgroundColor: isDarkMode
+            ? const Color(0xFF00008B)
+            : Colors.lightBlue,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -213,7 +249,7 @@ class _EventCreatePageState extends State<EventCreatePage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -221,13 +257,16 @@ class _EventCreatePageState extends State<EventCreatePage> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: isDarkMode ? Colors.white : Colors.black87,
                         ),
                       ),
                       SizedBox(height: 2),
                       Text(
                         'Fill in the details to host your event',
-                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -242,7 +281,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
                     width: double.infinity,
                     height: 180,
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: isDarkMode
+                          ? const Color(0xFF1E1E1E)
+                          : Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.lightBlue, width: 1.5),
                     ),
@@ -252,21 +293,33 @@ class _EventCreatePageState extends State<EventCreatePage> {
                             child: Image.file(_imageFile!, fit: BoxFit.cover),
                           )
                         : _webImageBytes != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.memory(_webImageBytes!, fit: BoxFit.cover),
-                              )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.add_a_photo, size: 40, color: Colors.lightBlue),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Tap to add event banner image',
-                                    style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500),
-                                  ),
-                                ],
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              _webImageBytes!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_a_photo,
+                                size: 40,
+                                color: Colors.lightBlue,
                               ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Tap to add event banner image',
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.grey[400]
+                                      : Colors.black54,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ),
@@ -275,10 +328,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
               // 1. Title Field
               TextFormField(
                 controller: _titleController,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
                 decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Event Title', 
-                    prefixIcon: Icons.title
-                  ),
+                  context,
+                  labelText: 'Event Title',
+                  prefixIcon: Icons.title,
+                ),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Please enter event title'
                     : null,
@@ -289,10 +346,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
                 decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Description', 
-                    prefixIcon: Icons.description
-                  ),
+                  context,
+                  labelText: 'Description',
+                  prefixIcon: Icons.description,
+                ),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Please enter description'
                     : null,
@@ -302,10 +363,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
               // 3. Place Field
               TextFormField(
                 controller: _placeController,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
                 decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Place / Location', 
-                    prefixIcon: Icons.location_on
-                  ),
+                  context,
+                  labelText: 'Place / Location',
+                  prefixIcon: Icons.location_on,
+                ),
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Please enter event place'
                     : null,
@@ -315,10 +380,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
               // 4. Category Dropdown
               DropdownButtonFormField<String>(
                 initialValue: _selectedCategory,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
                 decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Category', 
-                    prefixIcon: Icons.category
-                  ),
+                  context,
+                  labelText: 'Category',
+                  prefixIcon: Icons.category,
+                ),
                 items: _categories.map((category) {
                   return DropdownMenuItem(
                     value: category,
@@ -341,7 +410,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Colors.grey),
+                        side: BorderSide(
+                          color: isDarkMode
+                              ? Colors.grey.shade700
+                              : Colors.grey,
+                        ),
+                        backgroundColor: isDarkMode
+                            ? const Color(0xFF1E1E1E)
+                            : Colors.transparent,
                       ),
                       onPressed: _pickDate,
                       icon: const Icon(
@@ -350,7 +426,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
                       ),
                       label: Text(
                         "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}",
-                        style: const TextStyle(color: Colors.black87),
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                        ),
                       ),
                     ),
                   ),
@@ -360,7 +438,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Colors.grey),
+                        side: BorderSide(
+                          color: isDarkMode
+                              ? Colors.grey.shade700
+                              : Colors.grey,
+                        ),
+                        backgroundColor: isDarkMode
+                            ? const Color(0xFF1E1E1E)
+                            : Colors.transparent,
                       ),
                       onPressed: _pickTime,
                       icon: const Icon(
@@ -369,7 +454,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
                       ),
                       label: Text(
                         _selectedTime.format(context),
-                        style: const TextStyle(color: Colors.black87),
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.black87,
+                        ),
                       ),
                     ),
                   ),
@@ -381,10 +468,14 @@ class _EventCreatePageState extends State<EventCreatePage> {
               TextFormField(
                 controller: _maxAttendeesController,
                 keyboardType: TextInputType.number,
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
                 decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Max Attendees', 
-                    prefixIcon: Icons.group
-                  ),
+                  context,
+                  labelText: 'Max Attendees',
+                  prefixIcon: Icons.group,
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter max attendees limit';
@@ -403,7 +494,9 @@ class _EventCreatePageState extends State<EventCreatePage> {
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.lightBlue,
+                    backgroundColor: isDarkMode
+                        ? const Color(0xFF00008B)
+                        : Colors.lightBlue,
                     foregroundColor: Colors.white,
                   ),
                   onPressed: _isLoading ? null : _submitEvent,

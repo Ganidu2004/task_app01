@@ -68,15 +68,21 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: isDarkMode
+          ? const Color(0xFF121212)
+          : Colors.grey.shade50,
       appBar: AppBar(
         title: const Text(
           'Explore Events',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.lightBlue,
+        backgroundColor: isDarkMode
+            ? const Color(0xFF00008B)
+            : Colors.lightBlue,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -102,7 +108,7 @@ class _SearchPageState extends State<SearchPage> {
             // Inline Search Bar (No full-screen view popup)
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
                 borderRadius: BorderRadius.circular(12.0),
                 boxShadow: [
                   BoxShadow(
@@ -159,9 +165,10 @@ class _SearchPageState extends State<SearchPage> {
                   _selectedCategory == null
                       ? 'Categories'
                       : 'Category: $_selectedCategory',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18.0,
                     fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
                   ),
                 ),
                 if (_selectedCategory != null)
@@ -212,7 +219,11 @@ class _SearchPageState extends State<SearchPage> {
                                   end: Alignment.bottomRight,
                                 )
                               : null,
-                          color: isSelected ? null : Colors.white,
+                          color: isSelected
+                              ? null
+                              : (isDarkMode
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white),
                           borderRadius: BorderRadius.circular(16.0),
                           boxShadow: [
                             BoxShadow(
@@ -260,7 +271,9 @@ class _SearchPageState extends State<SearchPage> {
                                 fontSize: 11.0,
                                 color: isSelected
                                     ? Colors.white
-                                    : Colors.black87,
+                                    : (isDarkMode
+                                          ? Colors.white70
+                                          : Colors.black87),
                               ),
                             ),
                           ],
@@ -381,6 +394,8 @@ class _SearchPageState extends State<SearchPage> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isEventFull
                                       ? Colors.grey.shade400
+                                      : isDarkMode
+                                      ? const Color(0xFF00008B)
                                       : Colors.lightBlue,
                                   foregroundColor: Colors.white,
                                   elevation: 0,

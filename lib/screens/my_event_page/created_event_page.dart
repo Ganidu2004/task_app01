@@ -147,7 +147,7 @@ class MyCreatedEventsScreen extends StatelessWidget {
 
                                   if (context.mounted) {
                                     AppConstants.showCustomSnackBar(
-                                      context, 
+                                      context,
                                       'Event deleted successfully!',
                                       isError: false,
                                     );
@@ -155,7 +155,7 @@ class MyCreatedEventsScreen extends StatelessWidget {
                                 } catch (e) {
                                   if (context.mounted) {
                                     AppConstants.showCustomSnackBar(
-                                      context, 
+                                      context,
                                       'Failed to delete event: $e',
                                       isError: true,
                                     );

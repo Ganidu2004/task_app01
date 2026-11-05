@@ -10,9 +10,10 @@ class MyEventPage extends StatefulWidget {
 }
 
 class _MyEventPageState extends State<MyEventPage> {
-
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -22,7 +23,9 @@ class _MyEventPageState extends State<MyEventPage> {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
-          backgroundColor: Colors.lightBlue,
+          backgroundColor: isDarkMode
+              ? const Color(0xFF00008B)
+              : Colors.lightBlue,
           foregroundColor: Colors.white,
         ),
         body: Column(
@@ -32,7 +35,9 @@ class _MyEventPageState extends State<MyEventPage> {
               padding: const EdgeInsets.all(12.0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.lightBlue.shade800,
+                  color: isDarkMode
+                      ? const Color(0xFF00008B)
+                      : Colors.lightBlue.shade800,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TabBar(
@@ -44,19 +49,25 @@ class _MyEventPageState extends State<MyEventPage> {
                   labelColor: Colors.white,
                   unselectedLabelColor: Colors.white70,
                   tabs: const [
-                    Tab(text: 'Created Events', icon: Icon(Icons.edit_calendar)),
-                    Tab(text: 'Joined Events', icon: Icon(Icons.event_available)),
+                    Tab(
+                      text: 'Created Events',
+                      icon: Icon(Icons.edit_calendar),
+                    ),
+                    Tab(
+                      text: 'Joined Events',
+                      icon: Icon(Icons.event_available),
+                    ),
                   ],
                 ),
               ),
             ),
-            
+
             Expanded(
               child: TabBarView(
                 children: [
                   MyCreatedEventsScreen(),
                   // 2. Joined Events Section
-                 MyJoinedEventsScreen()
+                  MyJoinedEventsScreen(),
                 ],
               ),
             ),

@@ -13,6 +13,8 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -20,7 +22,9 @@ class HomePage extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.lightBlue,
+        backgroundColor: isDarkMode
+            ? const Color(0xFF00008B)
+            : Colors.lightBlue,
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -142,6 +146,8 @@ class HomePage extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isEventFull
                                       ? Colors.grey.shade400
+                                      : isDarkMode
+                                      ? const Color(0xFF00008B)
                                       : Colors.lightBlue,
                                   foregroundColor: Colors.white,
                                 ),

@@ -79,14 +79,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: isDarkMode
+          ? const Color(0xFF121212)
+          : const Color(0xFFF4F6F9),
       body: FutureBuilder<EventModel?>(
         future: widget.databaseService.getEventById(widget.eventId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             if (widget.initialEvent != null) {
-              return _buildEventUI(context, widget.initialEvent!);
+              return _buildEventUI(context, widget.initialEvent!, isDarkMode);
             }
             return const Center(
               child: CircularProgressIndicator(color: Colors.lightBlueAccent),
@@ -106,13 +110,17 @@ class _EventDetailPageState extends State<EventDetailPage> {
           if (event == null) {
             return const Center(child: Text('Event details not found.'));
           }
-          return _buildEventUI(context, event);
+          return _buildEventUI(context, event, isDarkMode);
         },
       ),
     );
   }
 
-  Widget _buildEventUI(BuildContext context, EventModel event) {
+  Widget _buildEventUI(
+    BuildContext context,
+    EventModel event,
+    bool isDarkMode,
+  ) {
     return Column(
       children: [
         Expanded(
@@ -125,7 +133,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 floating: false,
                 pinned: true,
                 elevation: 0,
-                backgroundColor: Colors.white,
+                backgroundColor: isDarkMode
+                    ? const Color(0xFF1E1E1E)
+                    : Colors.white,
                 leading: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CircleAvatar(
@@ -198,8 +208,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
               SliverToBoxAdapter(
                 child: Container(
                   transform: Matrix4.translationValues(0.0, -20.0, 0.0),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF4F6F9),
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? const Color(0xFF121212)
+                        : const Color(0xFFF4F6F9),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(28),
                       topRight: Radius.circular(28),
@@ -279,10 +291,12 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         // Title
                         Text(
                           event.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1E293B),
                             height: 1.2,
                           ),
                         ),
@@ -292,7 +306,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: isDarkMode
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
@@ -306,28 +322,41 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             children: [
                               _buildInfoTile(
                                 icon: Icons.calendar_month_rounded,
-                                iconBg: Colors.green.shade50,
+                                iconBg: isDarkMode
+                                    ? Colors.green.shade900.withValues(
+                                        alpha: 0.3,
+                                      )
+                                    : Colors.green.shade50,
                                 iconColor: Colors.green,
                                 title: 'Date',
                                 value: DateFormat(
                                   'EEEE, dd MMMM yyyy',
                                 ).format(event.date),
+                                isDarkMode: isDarkMode,
                               ),
                               const Divider(height: 20, thickness: 0.8),
                               _buildInfoTile(
                                 icon: Icons.schedule_rounded,
-                                iconBg: Colors.blue.shade50,
+                                iconBg: isDarkMode
+                                    ? Colors.blue.shade900.withValues(
+                                        alpha: 0.3,
+                                      )
+                                    : Colors.blue.shade50,
                                 iconColor: Colors.blueAccent,
                                 title: 'Time',
                                 value: event.time,
+                                isDarkMode: isDarkMode,
                               ),
                               const Divider(height: 20, thickness: 0.8),
                               _buildInfoTile(
                                 icon: Icons.location_on_rounded,
-                                iconBg: Colors.red.shade50,
+                                iconBg: isDarkMode
+                                    ? Colors.red.shade900.withValues(alpha: 0.3)
+                                    : Colors.red.shade50,
                                 iconColor: Colors.redAccent,
                                 title: 'Location',
                                 value: event.place,
+                                isDarkMode: isDarkMode,
                               ),
                             ],
                           ),
@@ -340,6 +369,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             event.organizerId,
                           ),
                           builder: (context, userSnapshot) {
+                            final bool isDarkMode =
+                                Theme.of(context).brightness == Brightness.dark;
                             final user = userSnapshot.data;
                             final userName = user?.fullName ?? 'Organizer';
                             final userImage = user?.profileImageUrl;
@@ -347,7 +378,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                             return Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: isDarkMode
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(18),
                                 boxShadow: [
                                   BoxShadow(
@@ -380,19 +413,23 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
+                                      Text(
                                         'Organized by',
                                         style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey,
+                                          fontSize: 12,
+                                          color: isDarkMode
+                                              ? Colors.grey[400]
+                                              : Colors.grey[600],
                                         ),
                                       ),
                                       Text(
                                         userName,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15,
-                                          color: Color(0xFF1E293B),
+                                          color: isDarkMode
+                                              ? Colors.white
+                                              : const Color(0xFF1E293B),
                                         ),
                                       ),
                                     ],
@@ -405,28 +442,32 @@ class _EventDetailPageState extends State<EventDetailPage> {
                         const SizedBox(height: 24),
 
                         // Description Section
-                        const Text(
+                        Text(
                           'About Event',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
+                            color: isDarkMode
+                                ? Colors.white
+                                : Color(0xFF1E293B),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           event.description,
-                          style: const TextStyle(
-                            fontSize: 14,
+                          style: TextStyle(
+                            fontSize: 16,
                             height: 1.6,
-                            color: Color(0xFF64748B),
+                            color: isDarkMode
+                                ? Colors.grey[300]
+                                : const Color(0xFF64748B),
                           ),
                         ),
                         const SizedBox(height: 28),
 
                         // Comments Title Header
                         Row(
-                          children: const [
+                          children: [
                             Icon(
                               Icons.forum_rounded,
                               color: Colors.blueAccent,
@@ -438,7 +479,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF1E293B),
                               ),
                             ),
                           ],
@@ -455,7 +498,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                               return Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.red.shade50,
+                                  color: isDarkMode
+                                      ? Colors.red.shade900.withValues(
+                                          alpha: 0.3,
+                                        )
+                                      : Colors.red.shade50,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -486,22 +533,28 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: isDarkMode
+                                      ? const Color(0xFF1E1E1E)
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Column(
-                                  children: const [
+                                  children: [
                                     Icon(
                                       Icons.chat_bubble_outline_rounded,
                                       size: 40,
-                                      color: Colors.grey,
+                                      color: isDarkMode
+                                          ? Colors.grey[500]
+                                          : Colors.grey,
                                     ),
                                     SizedBox(height: 8),
                                     Text(
                                       'No comments yet.',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.grey,
+                                        color: isDarkMode
+                                            ? Colors.grey[300]
+                                            : Colors.grey,
                                       ),
                                     ),
                                     SizedBox(height: 2),
@@ -509,7 +562,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                       'Be the first to share your thoughts!',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey,
+                                        color: isDarkMode
+                                            ? Colors.grey[500]
+                                            : Colors.grey,
                                       ),
                                     ),
                                   ],
@@ -543,7 +598,9 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                     return Container(
                                       padding: const EdgeInsets.all(14),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: isDarkMode
+                                            ? const Color(0xFF1E1E1E)
+                                            : Colors.white,
                                         borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
@@ -591,13 +648,15 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                                   children: [
                                                     Text(
                                                       userName,
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         fontWeight:
                                                             FontWeight.bold,
                                                         fontSize: 13,
-                                                        color: Color(
-                                                          0xFF1E293B,
-                                                        ),
+                                                        color: isDarkMode
+                                                            ? Colors.white
+                                                            : const Color(
+                                                                0xFF1E293B,
+                                                              ),
                                                       ),
                                                     ),
                                                     Row(
@@ -627,6 +686,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                                             padding:
                                                                 EdgeInsets.zero,
                                                             elevation: 4,
+                                                            color: isDarkMode
+                                                                ? const Color(
+                                                                    0xFF2C2C2C,
+                                                                  )
+                                                                : Colors.white,
                                                             shape: RoundedRectangleBorder(
                                                               borderRadius:
                                                                   BorderRadius.circular(
@@ -643,21 +707,30 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                                                   const EdgeInsets.all(
                                                                     4,
                                                                   ),
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .shade100,
-                                                                    shape: BoxShape
-                                                                        .circle,
-                                                                  ),
-                                                              child: const Icon(
+                                                              decoration: BoxDecoration(
+                                                                color:
+                                                                    isDarkMode
+                                                                    ? Colors
+                                                                          .grey
+                                                                          .shade800
+                                                                    : Colors
+                                                                          .grey
+                                                                          .shade100,
+                                                                shape: BoxShape
+                                                                    .circle,
+                                                              ),
+                                                              child: Icon(
                                                                 Icons
                                                                     .more_vert_rounded,
                                                                 size: 14,
-                                                                color: Color(
-                                                                  0xFF64748B,
-                                                                ),
+                                                                color:
+                                                                    isDarkMode
+                                                                    ? Colors
+                                                                          .grey
+                                                                          .shade300
+                                                                    : const Color(
+                                                                        0xFF64748B,
+                                                                      ),
                                                               ),
                                                             ),
                                                             onSelected: (value) async {
@@ -742,10 +815,14 @@ class _EventDetailPageState extends State<EventDetailPage> {
                                                 const SizedBox(height: 6),
                                                 Text(
                                                   comment.commentText,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 13.5,
                                                     height: 1.4,
-                                                    color: Color(0xFF334155),
+                                                    color: isDarkMode
+                                                        ? Colors.grey.shade300
+                                                        : const Color(
+                                                            0xFF334155,
+                                                          ),
                                                   ),
                                                 ),
                                               ],
@@ -773,10 +850,10 @@ class _EventDetailPageState extends State<EventDetailPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
@@ -789,14 +866,21 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 Expanded(
                   child: TextField(
                     controller: _commentController,
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white : Colors.black87,
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Write a public comment...',
                       hintStyle: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade400,
+                        color: isDarkMode
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade400,
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF1F5F9),
+                      fillColor: isDarkMode
+                          ? const Color(0xFF2C2C2C)
+                          : const Color(0xFFF1F5F9),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 12,
@@ -849,6 +933,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
     required Color iconColor,
     required String title,
     required String value,
+    required bool isDarkMode,
   }) {
     return Row(
       children: [
@@ -867,15 +952,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[800],
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
+                  color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
                 ),
               ),
             ],

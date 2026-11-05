@@ -290,6 +290,7 @@ class _EventEditPageState extends State<EventEditPage> {
               TextFormField(
                 controller: _titleController,
                 decoration: AppDecorations.authInputDecoration(
+                  context,
                   labelText: 'Event Title',
                   prefixIcon: Icons.title,
                 ),
@@ -304,6 +305,7 @@ class _EventEditPageState extends State<EventEditPage> {
                 controller: _descriptionController,
                 maxLines: 3,
                 decoration: AppDecorations.authInputDecoration(
+                  context,
                   labelText: 'Description',
                   prefixIcon: Icons.description,
                 ),
@@ -317,6 +319,7 @@ class _EventEditPageState extends State<EventEditPage> {
               TextFormField(
                 controller: _placeController,
                 decoration: AppDecorations.authInputDecoration(
+                  context,
                   labelText: 'Place / Location',
                   prefixIcon: Icons.location_on,
                 ),
@@ -330,6 +333,7 @@ class _EventEditPageState extends State<EventEditPage> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedCategory,
                 decoration: AppDecorations.authInputDecoration(
+                  context,
                   labelText: 'Category',
                   prefixIcon: Icons.category,
                 ),
@@ -394,6 +398,7 @@ class _EventEditPageState extends State<EventEditPage> {
                 controller: _maxAttendeesController,
                 keyboardType: TextInputType.number,
                 decoration: AppDecorations.authInputDecoration(
+                  context,
                   labelText: 'Max Attendees',
                   prefixIcon: Icons.group,
                 ),

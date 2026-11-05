@@ -34,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final CloudinaryService _cloudinaryService = CloudinaryService();
 
   bool _isLoading = false;
-  
+
   bool _isPasswordObscured = true;
   bool _isConfirmPasswordObscured = true;
 
@@ -70,19 +70,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       // 1. Upload image to Cloudinary first (if selected)
       String? imageUrl;
-        try {
-          imageUrl = await _cloudinaryService.uploadImage(
-            imageFile: _imageFile,
-            webImageBytes: _webImageBytes,
-            folderName: 'profile_images',
-            prefixName: 'profile',
-          );
-        } catch (uploadError) {
-          debugPrint('Image upload error: $uploadError');
-          if (mounted) {
-            AppConstants.showCustomSnackBar(
-            context, 
-            'Failed to upload image: $uploadError', 
+      try {
+        imageUrl = await _cloudinaryService.uploadImage(
+          imageFile: _imageFile,
+          webImageBytes: _webImageBytes,
+          folderName: 'profile_images',
+          prefixName: 'profile',
+        );
+      } catch (uploadError) {
+        debugPrint('Image upload error: $uploadError');
+        if (mounted) {
+          AppConstants.showCustomSnackBar(
+            context,
+            'Failed to upload image: $uploadError',
             isError: true,
           );
           setState(() {
@@ -223,8 +223,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _nameController,
                   decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Full Name', 
-                    prefixIcon: Icons.person
+                    null,
+                    labelText: 'Full Name',
+                    prefixIcon: Icons.person,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -240,8 +241,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Email Address', 
-                    prefixIcon: Icons.email
+                    null,
+                    labelText: 'Email Address',
+                    prefixIcon: Icons.email,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -262,8 +264,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Phone Number', 
-                    prefixIcon: Icons.phone
+                    null,
+                    labelText: 'Phone Number',
+                    prefixIcon: Icons.phone,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -281,21 +284,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _isPasswordObscured,
-                  decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Password', 
-                    prefixIcon: Icons.lock
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                  decoration:
+                      AppDecorations.authInputDecoration(
+                        null,
+                        labelText: 'Password',
+                        prefixIcon: Icons.lock,
+                      ).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordObscured
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordObscured = !_isPasswordObscured;
+                            });
+                          },
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() {
-                        _isPasswordObscured = !_isPasswordObscured;
-                        });
-                      },
-                    ),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a password';
@@ -312,21 +319,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _isConfirmPasswordObscured,
-                  decoration: AppDecorations.authInputDecoration(
-                    labelText: 'Confirm Password', 
-                    prefixIcon: Icons.lock_outline
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isConfirmPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                  decoration:
+                      AppDecorations.authInputDecoration(
+                        null,
+                        labelText: 'Confirm Password',
+                        prefixIcon: Icons.lock_outline,
+                      ).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isConfirmPasswordObscured
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isConfirmPasswordObscured =
+                                  !_isConfirmPasswordObscured;
+                            });
+                          },
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _isConfirmPasswordObscured = !_isConfirmPasswordObscured;
-                        });
-                      },
-                    ),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please confirm your password';
