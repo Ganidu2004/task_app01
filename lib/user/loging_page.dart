@@ -112,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: AppDecorations.authInputDecoration(
-                    null,
+                    context,
                     labelText: 'Email Address',
                     prefixIcon: Icons.email,
                   ),
@@ -135,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                   controller: _passwordController,
                   obscureText: true,
                   decoration: AppDecorations.authInputDecoration(
-                    null,
+                    context,
                     labelText: 'Password',
                     prefixIcon: Icons.lock,
                   ),

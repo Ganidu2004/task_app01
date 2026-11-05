@@ -223,7 +223,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _nameController,
                   decoration: AppDecorations.authInputDecoration(
-                    null,
+                    context,
                     labelText: 'Full Name',
                     prefixIcon: Icons.person,
                   ),
@@ -241,7 +241,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: AppDecorations.authInputDecoration(
-                    null,
+                    context,
                     labelText: 'Email Address',
                     prefixIcon: Icons.email,
                   ),
@@ -264,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: AppDecorations.authInputDecoration(
-                    null,
+                    context,
                     labelText: 'Phone Number',
                     prefixIcon: Icons.phone,
                   ),
@@ -286,7 +286,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _isPasswordObscured,
                   decoration:
                       AppDecorations.authInputDecoration(
-                        null,
+                        context,
                         labelText: 'Password',
                         prefixIcon: Icons.lock,
                       ).copyWith(
@@ -321,7 +321,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: _isConfirmPasswordObscured,
                   decoration:
                       AppDecorations.authInputDecoration(
-                        null,
+                        context,
                         labelText: 'Confirm Password',
                         prefixIcon: Icons.lock_outline,
                       ).copyWith(
