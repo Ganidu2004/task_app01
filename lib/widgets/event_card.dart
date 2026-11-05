@@ -4,6 +4,7 @@ import 'package:task_app/database_services.dart';
 import 'package:task_app/modles/event_modle.dart';
 import 'package:task_app/modles/user_modle.dart';
 import 'package:task_app/widgets/event_details_page.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class EventCard extends StatelessWidget {
   final EventModel event;
@@ -63,12 +64,19 @@ class EventCard extends StatelessWidget {
               if (event.imageUrl != null && event.imageUrl!.isNotEmpty)
                 Stack(
                   children: [
-                    Image.network(
-                      event.imageUrl!,
+                    CachedNetworkImage(
+                      imageUrl: event.imageUrl!,
                       height: 190,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      placeholder: (context, url) => Container(
+                        height: 190,
+                        color: isDarkMode ? Colors.grey[850] : Colors.grey[200],
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
                         height: 190,
                         color: Colors.grey[200],
                         child: const Icon(

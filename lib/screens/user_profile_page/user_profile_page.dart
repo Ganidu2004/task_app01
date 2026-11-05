@@ -402,6 +402,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                 onPressed: () async {
                                   Navigator.pop(context);
                                   await FirebaseAuth.instance.signOut();
+                                  imageCache.clear();
+                                  imageCache.clearLiveImages();
                                   logout();
                                 },
                                 child: const Text(
